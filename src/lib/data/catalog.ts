@@ -1,3 +1,5 @@
+import type { ServiceKind } from "@/lib/provider/service-fields";
+
 /** Local panel service shape (mapped from upstream PerfectPanel/SMMFlare API). */
 export type PanelService = {
   id: number;
@@ -6,7 +8,10 @@ export type PanelService = {
   rate: number;
   min: number;
   max: number;
-  type: "default" | "custom_comments";
+  /** Normalized kind for form fields */
+  type: ServiceKind;
+  /** Original provider type string */
+  providerType: string;
   description: string;
   providerServiceId?: number;
   refill?: boolean;
@@ -29,5 +34,6 @@ export function getService(services: PanelService[], id: number): PanelService |
 }
 
 export function chargeFor(service: PanelService, quantity: number): number {
-  return Math.round(((service.rate * quantity) / 1000) * 10000) / 10000;
+  const qty = Math.max(1, quantity);
+  return Math.round(((service.rate * qty) / 1000) * 10000) / 10000;
 }

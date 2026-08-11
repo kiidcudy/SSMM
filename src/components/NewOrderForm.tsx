@@ -5,6 +5,38 @@ import type { PanelService } from "@/lib/data/catalog";
 import { chargeFor } from "@/lib/data/catalog";
 import { detectPlatform } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
+import { countLines, fieldsForKind, type ExtraField } from "@/lib/provider/service-fields";
+
+const EXTRA_LABELS: Record<ExtraField, string> = {
+  comments: "Comments (one per line)",
+  keywords: "Keywords (one per line)",
+  usernames: "Usernames (one per line)",
+  hashtags: "Hashtags (one per line)",
+  hashtag: "Hashtag",
+  username: "Username",
+  media: "Media URL",
+  groups: "Groups (one per line)",
+  answer_number: "Poll answer number",
+  country: "Country (US or United States)",
+  device: "Device (1 Desktop · 2 Android · 3 iOS · 4 Mixed mobile · 5 Mixed)",
+  type_of_traffic: "Traffic type (1 Google · 2 Custom referrer · 3 Blank)",
+  google_keyword: "Google keyword",
+  referring_url: "Referring URL",
+  posts: "New posts limit (optional)",
+  old_posts: "Old posts (optional)",
+  delay: "Delay (minutes)",
+  expiry: "Expiry (d/m/Y)",
+  runs: "Drip-feed runs (optional)",
+  interval: "Drip-feed interval minutes (optional)",
+};
+
+const TEXTAREA_FIELDS = new Set<ExtraField>([
+  "comments",
+  "keywords",
+  "usernames",
+  "hashtags",
+  "groups",
+]);
 
 export function NewOrderForm({
   services,
@@ -33,8 +65,11 @@ export function NewOrderForm({
   );
   const [serviceId, setServiceId] = useState(filtered[0]?.id ?? 0);
   const service = services.find((s) => s.id === serviceId) ?? filtered[0];
+  const fields = fieldsForKind(service?.type || "default");
+
   const [link, setLink] = useState("");
   const [quantity, setQuantity] = useState(service?.min ?? 100);
+  const [extras, setExtras] = useState<Partial<Record<ExtraField, string>>>({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +83,14 @@ export function NewOrderForm({
   const svcRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const charge = service ? chargeFor(service, quantity) : 0;
+  const commentLines = countLines(extras.comments || "");
+  const billQty =
+    fields.quantityFromComments && commentLines > 0
+      ? commentLines
+      : fields.needsQuantity
+        ? quantity
+        : Math.max(1, service?.min || 1);
+  const charge = service ? chargeFor(service, billQty) : 0;
   const categoryPlatform = detectPlatform(category);
   const servicePlatform = detectPlatform(service?.category, service?.name);
 
@@ -97,6 +139,7 @@ export function NewOrderForm({
     setCategory(s.category);
     setServiceId(s.id);
     setQuantity(s.min);
+    setExtras({});
     setCatOpen(false);
     setSvcOpen(false);
     setSearchOpen(false);
@@ -115,17 +158,17 @@ export function NewOrderForm({
     if (first) {
       setServiceId(first.id);
       setQuantity(first.min);
+      setExtras({});
     }
   }
 
   function onServiceChange(id: number) {
     const s = services.find((x) => x.id === id);
     if (s) selectService(s);
-    else {
-      setServiceId(id);
-      setSvcOpen(false);
-      setSvcQuery("");
-    }
+  }
+
+  function setExtra(key: ExtraField, value: string) {
+    setExtras((prev) => ({ ...prev, [key]: value }));
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -138,7 +181,12 @@ export function NewOrderForm({
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceId: service.id, link, quantity }),
+        body: JSON.stringify({
+          serviceId: service.id,
+          link,
+          quantity: billQty,
+          ...extras,
+        }),
       });
       const data = (await res.json()) as { error?: string; id?: string };
       if (!res.ok) {
@@ -147,6 +195,7 @@ export function NewOrderForm({
       }
       setMessage(`Order #${data.id} placed successfully.`);
       setLink("");
+      setExtras({});
     } catch {
       setError("Network error");
     } finally {
@@ -198,7 +247,7 @@ export function NewOrderForm({
                           {" — "}
                           {s.name}
                           <span className="mt-0.5 block text-xs text-[#93a0b8]">
-                            {s.category} · ${s.rate}/1K
+                            {s.category} · ${s.rate}/1K · {s.providerType}
                           </span>
                         </span>
                       </button>
@@ -351,34 +400,87 @@ export function NewOrderForm({
           </div>
           <p className="mt-2">{service.description}</p>
           <p className="mt-2">
-            Min {service.min} · Max {service.max} · ${service.rate.toFixed(4)} / 1000
+            Type: {service.providerType} · Min {service.min} · Max {service.max} · $
+            {service.rate.toFixed(4)} / 1000
           </p>
         </div>
       ) : null}
 
-      <div>
-        <label className="mb-1 block text-sm text-[#93a0b8]">{labels.link}</label>
-        <input
-          className="input"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          placeholder="https://"
-          required
-        />
-      </div>
+      {fields.needsLink ? (
+        <div>
+          <label className="mb-1 block text-sm text-[#93a0b8]">{labels.link}</label>
+          <input
+            className="input"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="https://"
+            required
+          />
+        </div>
+      ) : null}
 
-      <div>
-        <label className="mb-1 block text-sm text-[#93a0b8]">{labels.quantity}</label>
-        <input
-          className="input"
-          type="number"
-          value={quantity}
-          min={service?.min}
-          max={service?.max}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          required
-        />
-      </div>
+      {fields.extras.map((field) => {
+        const required =
+          field === "comments" ||
+          field === "username" ||
+          field === "keywords" ||
+          field === "usernames" ||
+          field === "hashtag" ||
+          field === "media" ||
+          field === "groups" ||
+          field === "answer_number";
+        if (TEXTAREA_FIELDS.has(field)) {
+          return (
+            <div key={field}>
+              <label className="mb-1 block text-sm text-[#93a0b8]">{EXTRA_LABELS[field]}</label>
+              <textarea
+                className="input min-h-28 resize-y"
+                value={extras[field] || ""}
+                onChange={(e) => setExtra(field, e.target.value)}
+                placeholder={field === "comments" ? "Great post!\nLove this\nNice shot" : undefined}
+                required={required}
+              />
+              {field === "comments" && commentLines > 0 ? (
+                <p className="mt-1 text-xs text-[#93a0b8]">{commentLines} comment line(s) → quantity</p>
+              ) : null}
+            </div>
+          );
+        }
+        return (
+          <div key={field}>
+            <label className="mb-1 block text-sm text-[#93a0b8]">{EXTRA_LABELS[field]}</label>
+            <input
+              className="input"
+              value={extras[field] || ""}
+              onChange={(e) => setExtra(field, e.target.value)}
+              required={required}
+            />
+          </div>
+        );
+      })}
+
+      {fields.needsQuantity && !fields.quantityFromComments ? (
+        <div>
+          <label className="mb-1 block text-sm text-[#93a0b8]">{labels.quantity}</label>
+          <input
+            className="input"
+            type="number"
+            value={quantity}
+            min={service?.min}
+            max={service?.max}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+            required
+          />
+        </div>
+      ) : null}
+
+      {fields.quantityFromComments ? (
+        <div className="rounded-lg border border-[#243049] px-4 py-3 text-sm text-[#93a0b8]">
+          Quantity from comments:{" "}
+          <span className="font-semibold text-[#e8eefc]">{commentLines || 0}</span>
+          {service ? ` (min ${service.min} · max ${service.max})` : null}
+        </div>
+      ) : null}
 
       <div className="rounded-lg border border-[#243049] px-4 py-3">
         <span className="text-sm text-[#93a0b8]">{labels.charge}</span>

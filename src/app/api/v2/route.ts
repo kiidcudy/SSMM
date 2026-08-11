@@ -42,13 +42,13 @@ export async function POST(req: Request) {
         services.map((s) => ({
           service: s.id,
           name: s.name,
-          type: s.type,
+          type: s.providerType || s.type,
           category: s.category,
           rate: String(s.rate),
           min: String(s.min),
           max: String(s.max),
-          refill: false,
-          cancel: false,
+          refill: Boolean(s.refill),
+          cancel: Boolean(s.cancel),
         })),
       );
     }

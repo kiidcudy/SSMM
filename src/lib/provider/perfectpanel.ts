@@ -1,5 +1,5 @@
 /**
- * Upstream PerfectPanel-compatible client.
+ * Upstream PerfectPanel-compatible client (SMMFlare).
  * Env: PROVIDER_API_URL, PROVIDER_API_KEY
  */
 
@@ -13,11 +13,40 @@ export type ProviderService = {
   max: string;
   refill?: boolean;
   cancel?: boolean;
+  dripfeed?: boolean;
 };
 
 type ProviderConfig = {
   apiUrl: string;
   apiKey: string;
+};
+
+export type ProviderOrderParams = {
+  service: number;
+  link?: string;
+  quantity?: number;
+  comments?: string;
+  keywords?: string;
+  usernames?: string;
+  hashtags?: string;
+  hashtag?: string;
+  username?: string;
+  media?: string;
+  groups?: string;
+  answer_number?: string | number;
+  country?: string;
+  device?: string | number;
+  type_of_traffic?: string | number;
+  google_keyword?: string;
+  referring_url?: string;
+  posts?: string | number;
+  old_posts?: string | number;
+  delay?: string | number;
+  expiry?: string;
+  runs?: string | number;
+  interval?: string | number;
+  min?: string | number;
+  max?: string | number;
 };
 
 function config(): ProviderConfig | null {
@@ -38,7 +67,10 @@ async function call<T>(action: string, params: Record<string, string | number> =
   const body = new URLSearchParams();
   body.set("key", cfg.apiKey);
   body.set("action", action);
-  for (const [k, v] of Object.entries(params)) body.set(k, String(v));
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === "") continue;
+    body.set(k, String(v));
+  }
 
   const res = await fetch(cfg.apiUrl, {
     method: "POST",
@@ -67,18 +99,38 @@ export async function providerServices(): Promise<ProviderService[]> {
   return call<ProviderService[]>("services");
 }
 
-export async function providerAdd(input: {
-  service: number;
-  link: string;
-  quantity: number;
-  comments?: string;
-}): Promise<{ order: number }> {
-  const params: Record<string, string | number> = {
-    service: input.service,
-    link: input.link,
-    quantity: input.quantity,
-  };
-  if (input.comments) params.comments = input.comments;
+export async function providerAdd(input: ProviderOrderParams): Promise<{ order: number }> {
+  const params: Record<string, string | number> = { service: input.service };
+  const keys: (keyof ProviderOrderParams)[] = [
+    "link",
+    "quantity",
+    "comments",
+    "keywords",
+    "usernames",
+    "hashtags",
+    "hashtag",
+    "username",
+    "media",
+    "groups",
+    "answer_number",
+    "country",
+    "device",
+    "type_of_traffic",
+    "google_keyword",
+    "referring_url",
+    "posts",
+    "old_posts",
+    "delay",
+    "expiry",
+    "runs",
+    "interval",
+    "min",
+    "max",
+  ];
+  for (const k of keys) {
+    const v = input[k];
+    if (v !== undefined && v !== null && v !== "") params[k] = v as string | number;
+  }
   return call<{ order: number }>("add", params);
 }
 
