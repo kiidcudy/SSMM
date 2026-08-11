@@ -1,13 +1,12 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
-import { Redis } from "@upstash/redis";
+import { get, put } from "@vercel/blob";
 import { type PanelService } from "@/lib/data/catalog";
 import { isProviderConfigured } from "@/lib/provider/perfectpanel";
 import { fetchMappedProviderServices } from "@/lib/provider/sync-services";
 
-const REDIS_DB_KEY = "ssmm:db";
-const REDIS_LOCK_KEY = "ssmm:db:lock";
+const BLOB_DB_PATH = "ssmm/db.json";
 
 export type StoredUser = {
   id: string;
@@ -101,28 +100,34 @@ type DbShape = {
   refills: StoredRefill[];
 };
 
-/** Local only: project .data. On Vercel prefer Upstash Redis (shared + durable). */
+/** Local only: project .data. On Vercel use Vercel Blob (same pattern as other sites). */
 function resolvePaths() {
   const dataDir = path.join(process.cwd(), ".data");
   return { dataDir, dbFile: path.join(dataDir, "db.json") };
 }
 
-function redisConfigured() {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+function resolveBlobToken(): string {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  const key = Object.keys(process.env).find(
+    (k) => k.toUpperCase().endsWith("READ_WRITE_TOKEN") && process.env[k],
+  );
+  return key ? (process.env[key] as string) : "";
 }
 
-let redisClient: Redis | null = null;
-function getRedis() {
-  if (!redisClient) redisClient = Redis.fromEnv();
-  return redisClient;
+function blobConfigured() {
+  return Boolean(process.env.BLOB_STORE_ID?.trim() || resolveBlobToken());
+}
+
+function blobAuthOptions(): { token?: string; storeId?: string } {
+  const token = resolveBlobToken();
+  if (token) return { token };
+  const storeId = process.env.BLOB_STORE_ID?.trim();
+  if (storeId) return { storeId };
+  return {};
 }
 
 function cloneDb(db: DbShape): DbShape {
   return JSON.parse(JSON.stringify(db)) as DbShape;
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 let memoryDb: DbShape | null = null;
@@ -257,9 +262,35 @@ async function saveFile(db: DbShape) {
   }
 }
 
-/** Read-modify-write under a short Redis lock (shared across Vercel instances). */
+async function readBlobDb(): Promise<DbShape | null> {
+  try {
+    const result = await get(BLOB_DB_PATH, {
+      access: "private",
+      useCache: false,
+      ...blobAuthOptions(),
+    });
+    if (!result?.stream) return null;
+    const text = await new Response(result.stream).text();
+    if (!text) return null;
+    return migrateDb(JSON.parse(text) as DbShape);
+  } catch {
+    return null;
+  }
+}
+
+async function writeBlobDb(db: DbShape): Promise<void> {
+  await put(BLOB_DB_PATH, JSON.stringify(db), {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+    ...blobAuthOptions(),
+  });
+}
+
+/** Shared read-modify-write for Blob (Vercel) or local .data file. */
 async function modifyDb<T>(fn: (db: DbShape) => Promise<T> | T): Promise<T> {
-  if (!redisConfigured()) {
+  if (!blobConfigured()) {
     const db = await loadFileDb();
     applyAdminSync(db);
     const result = await fn(db);
@@ -267,41 +298,23 @@ async function modifyDb<T>(fn: (db: DbShape) => Promise<T> | T): Promise<T> {
     return result;
   }
 
-  const redis = getRedis();
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const locked = await redis.set(REDIS_LOCK_KEY, "1", { nx: true, px: 8000 });
-    // Upstash returns "OK" when the lock is acquired, null otherwise.
-    if (!locked) {
-      await sleep(30 + attempt * 40);
-      continue;
-    }
-    try {
-      const raw = await redis.get<DbShape>(REDIS_DB_KEY);
-      const db = migrateDb(raw ? cloneDb(raw) : emptyDb());
-      applyAdminSync(db);
-      const result = await fn(db);
-      await redis.set(REDIS_DB_KEY, db);
-      return result;
-    } finally {
-      await redis.del(REDIS_LOCK_KEY);
-    }
-  }
-  throw new Error("Database is busy, try again");
+  const raw = await readBlobDb();
+  const db = migrateDb(raw ? cloneDb(raw) : emptyDb());
+  applyAdminSync(db);
+  const result = await fn(db);
+  await writeBlobDb(db);
+  return result;
 }
 
 async function ensureDb(): Promise<DbShape> {
-  if (redisConfigured()) {
-    const redis = getRedis();
-    const raw = await redis.get<DbShape>(REDIS_DB_KEY);
+  if (blobConfigured()) {
+    const raw = await readBlobDb();
     if (!raw) {
       return modifyDb(async (db) => cloneDb(db));
     }
     const db = migrateDb(cloneDb(raw));
     if (applyAdminSync(db)) {
-      return modifyDb(async (locked) => {
-        applyAdminSync(locked);
-        return cloneDb(locked);
-      });
+      await writeBlobDb(db);
     }
     return db;
   }
