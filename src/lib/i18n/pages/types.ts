@@ -1,5 +1,3 @@
-import type { Locale } from "@/lib/site";
-
 export type LegalSection = { id: string; title: string; body: string[] };
 
 export type PageChrome = {

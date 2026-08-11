@@ -103,7 +103,7 @@ function makeAdminUser(now: string): StoredUser {
 async function syncAdminFromEnv(db: DbShape): Promise<DbShape> {
   const { username, password } = adminCredentials();
   const now = new Date().toISOString();
-  let admin = db.users.find((u) => u.id === "admin-1" || u.role === "admin");
+  const admin = db.users.find((u) => u.id === "admin-1" || u.role === "admin");
   let changed = false;
 
   if (!admin) {
