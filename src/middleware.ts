@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { LOCALES, SITE, isLocale } from "@/lib/site";
+import { SITE, isLocale } from "@/lib/site";
 
 const PUBLIC_FILE = /\.[^/]+$/;
 
@@ -40,5 +40,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
-
-export { LOCALES };

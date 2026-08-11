@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SITE, PAYMENT_METHODS, isLocale, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -298,13 +299,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           {getBlogPosts(locale).slice(0, 3).map((post) => (
             <article key={post.slug} className="card overflow-hidden">
               <LocaleLink href={`/blog/${post.slug}`} locale={locale}>
-                <img
+                <Image
                   src={post.image}
                   alt={post.imageAlt}
                   width={640}
                   height={360}
                   className="aspect-[16/9] w-full object-cover"
-                  loading="lazy"
                 />
               </LocaleLink>
               <div className="p-5">

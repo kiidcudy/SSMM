@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { isLocale, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -86,13 +87,12 @@ export default async function FreeServicesPage({ params }: { params: Promise<{ l
                   return (
                   <article key={pack.slug} className="card flex flex-col overflow-hidden">
                     <LocaleLink href={`/free-services/${pack.slug}`} locale={locale}>
-                      <img
+                      <Image
                         src={pack.image}
                         alt={pack.imageAlt}
                         width={640}
                         height={360}
                         className="aspect-[16/9] w-full object-cover"
-                        loading="lazy"
                       />
                     </LocaleLink>
                     <div className="flex flex-1 flex-col p-5">

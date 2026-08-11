@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SITE, isLocale, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -111,14 +112,13 @@ export default async function FreePackPage({
         </p>
         <p className="mt-4 max-w-2xl text-lg text-[var(--color-muted)]">{pack.description}</p>
 
-        <img
+        <Image
           src={pack.image}
           alt={pack.imageAlt}
           width={1200}
           height={675}
           className="mt-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-[var(--color-border)] object-cover"
-          loading="eager"
-          fetchPriority="high"
+          priority
         />
 
         <div className="mt-8 grid max-w-3xl gap-4 sm:grid-cols-3">
@@ -206,7 +206,7 @@ export default async function FreePackPage({
                   locale={locale}
                   className="card overflow-hidden hover:border-cyan-400/40"
                 >
-                  <img src={r.image} alt={r.imageAlt} width={400} height={225} className="aspect-[16/9] w-full object-cover" loading="lazy" />
+                  <Image src={r.image} alt={r.imageAlt} width={400} height={225} className="aspect-[16/9] w-full object-cover" />
                   <div className="p-3">
                     <p className="text-sm font-semibold">{r.title}</p>
                     <p className="mt-1 text-xs text-[var(--color-muted)]">

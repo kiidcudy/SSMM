@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SITE, isLocale, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -50,13 +51,13 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         <h1 className="section-title mt-3">{c.aboutH1}</h1>
         <p className="mt-4 max-w-3xl text-lg text-[var(--color-muted)]">{c.aboutLead}</p>
 
-        <img
+        <Image
           src="/blog/smm-panel-beginners-cover.png"
           alt={c.aboutImgAlt}
           width={1200}
           height={675}
           className="mt-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-[var(--color-border)] object-cover"
-          loading="eager"
+          priority
         />
 
         <nav className="rank-math-toc mt-8 max-w-3xl" aria-label={t.free.toc}>

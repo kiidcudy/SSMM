@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SITE, isLocale, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -110,14 +111,13 @@ export default async function BlogPostPage({
           <p className="mt-4 text-lg text-[var(--color-muted)]">{post.excerpt}</p>
         </header>
 
-        <img
+        <Image
           src={post.image}
           alt={post.imageAlt}
           width={1200}
           height={675}
           className="mt-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-[var(--color-border)] object-cover"
-          loading="eager"
-          fetchPriority="high"
+          priority
         />
 
         <aside className="card mt-6 max-w-3xl border-cyan-400/20 bg-cyan-400/5 p-5">
@@ -147,13 +147,12 @@ export default async function BlogPostPage({
           dangerouslySetInnerHTML={{ __html: body }}
         />
 
-        <img
+        <Image
           src={post.image2}
           alt={post.imageAlt2}
           width={1200}
           height={675}
           className="mt-10 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-[var(--color-border)] object-cover"
-          loading="lazy"
         />
 
         <section className="mt-12 max-w-3xl">
@@ -178,7 +177,7 @@ export default async function BlogPostPage({
                 locale={locale}
                 className="card overflow-hidden transition hover:border-cyan-400/40"
               >
-                <img src={r.image} alt={r.imageAlt} width={400} height={225} className="aspect-[16/9] w-full object-cover" loading="lazy" />
+                <Image src={r.image} alt={r.imageAlt} width={400} height={225} className="aspect-[16/9] w-full object-cover" />
                 <div className="p-4">
                   <p className="text-sm font-semibold leading-snug">{r.title}</p>
                 </div>
