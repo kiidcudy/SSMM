@@ -65,6 +65,7 @@ export const ptBr: Dictionary = {
     placeOrder: "Fazer pedido",
     orderWarning:
       "Não crie 2 pedidos do mesmo serviço com o mesmo link. O pedido pode aparecer como concluído mesmo que a entrega ainda não tenha terminado.",
+    orderPublicHint: "Antes de pedir, confirme que sua conta ou página está pública.",
     instantStart: "Início instantâneo",
     servicesCount: "Mais de 3000 serviços",
     support247: "Suporte 24/7",

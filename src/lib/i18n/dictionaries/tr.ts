@@ -60,6 +60,7 @@ export const tr: Dictionary = {
     placeOrder: "Sipariş ver",
     orderWarning:
       "Aynı link için aynı servisten 2 sipariş açmayın. Teslimat bitmeden sipariş tamamlandı görünebilir.",
+    orderPublicHint: "Sipariş vermeden önce hesabınızın veya sayfanızın herkese açık olduğundan emin olun.",
     instantStart: "Anında Başlar",
     servicesCount: "3000+ Servis",
     support247: "7/24 Destek",

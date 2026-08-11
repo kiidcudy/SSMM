@@ -65,6 +65,7 @@ export const ar: Dictionary = {
     placeOrder: "تقديم الطلب",
     orderWarning:
       "يرجى عدم إنشاء طلبين لنفس الخدمة من نفس الرابط. قد يظهر الطلب كمكتمل حتى لو لم تنتهِ عملية التسليم بعد.",
+    orderPublicHint: "قبل الطلب، تأكد أن حسابك أو صفحتك عامة.",
     instantStart: "بدء فوري",
     servicesCount: "أكثر من 3000 خدمة",
     support247: "دعم على مدار الساعة",

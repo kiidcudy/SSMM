@@ -65,6 +65,7 @@ export const en: Dictionary = {
     placeOrder: "Place order",
     orderWarning:
       "Please do not create 2 orders for the same service from the same link. The order may appear as completed even if delivery is not finished yet.",
+    orderPublicHint: "Before placing an order, make sure your account or page is set to public.",
     instantStart: "Instant Start",
     servicesCount: "3000+ Services",
     support247: "24/7 Support",

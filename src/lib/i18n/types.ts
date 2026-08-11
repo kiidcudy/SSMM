@@ -55,6 +55,7 @@ export type Dictionary = {
     charge: string;
     placeOrder: string;
     orderWarning: string;
+    orderPublicHint: string;
     instantStart: string;
     servicesCount: string;
     support247: string;

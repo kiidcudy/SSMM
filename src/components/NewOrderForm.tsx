@@ -52,6 +52,7 @@ export function NewOrderForm({
     charge: string;
     placeOrder: string;
     orderWarning: string;
+    orderPublicHint: string;
   };
 }) {
   const categories = useMemo(
@@ -207,6 +208,9 @@ export function NewOrderForm({
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
         {labels.orderWarning}
+      </div>
+      <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+        {labels.orderPublicHint}
       </div>
 
       <div ref={searchRef} className="relative z-40">

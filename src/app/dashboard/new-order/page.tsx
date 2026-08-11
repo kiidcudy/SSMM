@@ -27,6 +27,7 @@ export default async function NewOrderPage() {
             charge: t.dash.charge,
             placeOrder: t.dash.placeOrder,
             orderWarning: t.dash.orderWarning,
+            orderPublicHint: t.dash.orderPublicHint,
           }}
         />
       </div>

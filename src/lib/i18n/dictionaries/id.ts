@@ -65,6 +65,7 @@ export const id: Dictionary = {
     placeOrder: "Buat pesanan",
     orderWarning:
       "Jangan membuat 2 pesanan untuk layanan yang sama dari tautan yang sama. Pesanan mungkin terlihat selesai meskipun pengiriman belum selesai.",
+    orderPublicHint: "Sebelum memesan, pastikan akun atau halaman Anda bersifat publik.",
     instantStart: "Mulai instan",
     servicesCount: "3000+ Layanan",
     support247: "Dukungan 24/7",
