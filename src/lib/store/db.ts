@@ -1,10 +1,13 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { promises as fs } from "fs";
-import os from "os";
 import path from "path";
+import { Redis } from "@upstash/redis";
 import { type PanelService } from "@/lib/data/catalog";
 import { isProviderConfigured } from "@/lib/provider/perfectpanel";
 import { fetchMappedProviderServices } from "@/lib/provider/sync-services";
+
+const REDIS_DB_KEY = "ssmm:db";
+const REDIS_LOCK_KEY = "ssmm:db:lock";
 
 export type StoredUser = {
   id: string;
@@ -98,13 +101,28 @@ type DbShape = {
   refills: StoredRefill[];
 };
 
-/** Vercel/Lambda: cwd is read-only — use /tmp. Local: project .data */
+/** Local only: project .data. On Vercel prefer Upstash Redis (shared + durable). */
 function resolvePaths() {
-  const serverless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-  const dataDir = serverless
-    ? path.join(os.tmpdir(), "ssmmpanel-data")
-    : path.join(process.cwd(), ".data");
+  const dataDir = path.join(process.cwd(), ".data");
   return { dataDir, dbFile: path.join(dataDir, "db.json") };
+}
+
+function redisConfigured() {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
+let redisClient: Redis | null = null;
+function getRedis() {
+  if (!redisClient) redisClient = Redis.fromEnv();
+  return redisClient;
+}
+
+function cloneDb(db: DbShape): DbShape {
+  return JSON.parse(JSON.stringify(db)) as DbShape;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 let memoryDb: DbShape | null = null;
@@ -155,8 +173,8 @@ function makeAdminUser(now: string): StoredUser {
   };
 }
 
-/** Keep admin username/password aligned with env (needed on Vercel). */
-async function syncAdminFromEnv(db: DbShape): Promise<DbShape> {
+/** Keep admin username/password aligned with env (needed on Vercel). Returns whether mutated. */
+function applyAdminSync(db: DbShape): boolean {
   const { username, password } = adminCredentials();
   const now = new Date().toISOString();
   const admin = db.users.find((u) => u.id === "admin-1" || u.role === "admin");
@@ -184,9 +202,7 @@ async function syncAdminFromEnv(db: DbShape): Promise<DbShape> {
     }
   }
 
-  memoryDb = db;
-  if (changed) await save(db);
-  return db;
+  return changed;
 }
 
 function emptyDb(): DbShape {
@@ -212,8 +228,8 @@ function migrateDb(db: DbShape): DbShape {
   return db;
 }
 
-async function ensureDb(): Promise<DbShape> {
-  if (memoryDb) return syncAdminFromEnv(migrateDb(memoryDb));
+async function loadFileDb(): Promise<DbShape> {
+  if (memoryDb) return migrateDb(memoryDb);
 
   const { dataDir, dbFile } = resolvePaths();
   try {
@@ -221,24 +237,78 @@ async function ensureDb(): Promise<DbShape> {
     const raw = await fs.readFile(dbFile, "utf8");
     const db = migrateDb(JSON.parse(raw) as DbShape);
     memoryDb = db;
-    return syncAdminFromEnv(db);
+    return db;
   } catch {
     const db = emptyDb();
     memoryDb = db;
-    await save(db);
+    await saveFile(db);
     return db;
   }
 }
 
-async function save(db: DbShape) {
+async function saveFile(db: DbShape) {
   memoryDb = db;
   const { dataDir, dbFile } = resolvePaths();
   try {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(dbFile, JSON.stringify(db, null, 2), "utf8");
   } catch {
-    // Serverless FS can fail; memory still serves the current instance.
+    // Local FS can fail; memory still serves the current process.
   }
+}
+
+/** Read-modify-write under a short Redis lock (shared across Vercel instances). */
+async function modifyDb<T>(fn: (db: DbShape) => Promise<T> | T): Promise<T> {
+  if (!redisConfigured()) {
+    const db = await loadFileDb();
+    applyAdminSync(db);
+    const result = await fn(db);
+    await saveFile(db);
+    return result;
+  }
+
+  const redis = getRedis();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const locked = await redis.set(REDIS_LOCK_KEY, "1", { nx: true, px: 8000 });
+    // Upstash returns "OK" when the lock is acquired, null otherwise.
+    if (!locked) {
+      await sleep(30 + attempt * 40);
+      continue;
+    }
+    try {
+      const raw = await redis.get<DbShape>(REDIS_DB_KEY);
+      const db = migrateDb(raw ? cloneDb(raw) : emptyDb());
+      applyAdminSync(db);
+      const result = await fn(db);
+      await redis.set(REDIS_DB_KEY, db);
+      return result;
+    } finally {
+      await redis.del(REDIS_LOCK_KEY);
+    }
+  }
+  throw new Error("Database is busy, try again");
+}
+
+async function ensureDb(): Promise<DbShape> {
+  if (redisConfigured()) {
+    const redis = getRedis();
+    const raw = await redis.get<DbShape>(REDIS_DB_KEY);
+    if (!raw) {
+      return modifyDb(async (db) => cloneDb(db));
+    }
+    const db = migrateDb(cloneDb(raw));
+    if (applyAdminSync(db)) {
+      return modifyDb(async (locked) => {
+        applyAdminSync(locked);
+        return cloneDb(locked);
+      });
+    }
+    return db;
+  }
+
+  const db = await loadFileDb();
+  if (applyAdminSync(db)) await saveFile(db);
+  return db;
 }
 
 export async function listUsers() {
@@ -265,36 +335,36 @@ export async function createUser(input: {
   email: string;
   password: string;
 }): Promise<StoredUser> {
-  const db = await ensureDb();
-  if (db.users.some((u) => u.username.toLowerCase() === input.username.toLowerCase())) {
-    throw new Error("Username taken");
-  }
-  const now = new Date().toISOString();
-  const user: StoredUser = {
-    id: randomBytes(8).toString("hex"),
-    username: input.username.trim(),
-    email: input.email.trim().toLowerCase(),
-    passwordHash: hashPassword(input.password),
-    role: "user",
-    balance: 0,
-    spent: 0,
-    status: "active",
-    apiKey: newApiKey(),
-    createdAt: now,
-    lastAuthAt: now,
-    discountPercent: 0,
-  };
-  db.users.push(user);
-  await save(db);
-  return user;
+  return modifyDb(async (db) => {
+    if (db.users.some((u) => u.username.toLowerCase() === input.username.toLowerCase())) {
+      throw new Error("Username taken");
+    }
+    const now = new Date().toISOString();
+    const user: StoredUser = {
+      id: randomBytes(8).toString("hex"),
+      username: input.username.trim(),
+      email: input.email.trim().toLowerCase(),
+      passwordHash: hashPassword(input.password),
+      role: "user",
+      balance: 0,
+      spent: 0,
+      status: "active",
+      apiKey: newApiKey(),
+      createdAt: now,
+      lastAuthAt: now,
+      discountPercent: 0,
+    };
+    db.users.push(user);
+    return user;
+  });
 }
 
 export async function touchAuth(userId: string) {
-  const db = await ensureDb();
-  const u = db.users.find((x) => x.id === userId);
-  if (!u) return;
-  u.lastAuthAt = new Date().toISOString();
-  await save(db);
+  await modifyDb(async (db) => {
+    const u = db.users.find((x) => x.id === userId);
+    if (!u) return;
+    u.lastAuthAt = new Date().toISOString();
+  });
 }
 
 async function pushLedger(
@@ -314,32 +384,32 @@ export async function adjustBalance(
   spentDelta = 0,
   meta?: { type?: LedgerEntry["type"]; note?: string; refId?: string },
 ) {
-  const db = await ensureDb();
-  const u = db.users.find((x) => x.id === userId);
-  if (!u) throw new Error("User not found");
-  const next = Math.round((u.balance + delta) * 10000) / 10000;
-  if (next < -0.00001) throw new Error("Insufficient balance");
-  u.balance = Math.max(0, next);
-  u.spent = Math.round((u.spent + spentDelta) * 10000) / 10000;
-  await pushLedger(db, {
-    userId,
-    type: meta?.type || (delta >= 0 ? "deposit" : "order"),
-    amount: delta,
-    balanceAfter: u.balance,
-    note: meta?.note || (delta >= 0 ? "Balance credit" : "Order charge"),
-    refId: meta?.refId,
+  return modifyDb(async (db) => {
+    const u = db.users.find((x) => x.id === userId);
+    if (!u) throw new Error("User not found");
+    const next = Math.round((u.balance + delta) * 10000) / 10000;
+    if (next < -0.00001) throw new Error("Insufficient balance");
+    u.balance = Math.max(0, next);
+    u.spent = Math.round((u.spent + spentDelta) * 10000) / 10000;
+    await pushLedger(db, {
+      userId,
+      type: meta?.type || (delta >= 0 ? "deposit" : "order"),
+      amount: delta,
+      balanceAfter: u.balance,
+      note: meta?.note || (delta >= 0 ? "Balance credit" : "Order charge"),
+      refId: meta?.refId,
+    });
+    return u;
   });
-  await save(db);
-  return u;
 }
 
 export async function setUserBalance(userId: string, balance: number) {
-  const db = await ensureDb();
-  const u = db.users.find((x) => x.id === userId);
-  if (!u) throw new Error("User not found");
-  u.balance = Math.round(balance * 10000) / 10000;
-  await save(db);
-  return u;
+  return modifyDb(async (db) => {
+    const u = db.users.find((x) => x.id === userId);
+    if (!u) throw new Error("User not found");
+    u.balance = Math.round(balance * 10000) / 10000;
+    return u;
+  });
 }
 
 export async function listServices() {
@@ -350,9 +420,9 @@ export async function listServices() {
     try {
       const items = await fetchMappedProviderServices();
       servicesCache = { at: Date.now(), items };
-      const db = await ensureDb();
-      db.services = items;
-      await save(db);
+      await modifyDb(async (db) => {
+        db.services = items;
+      });
       return items;
     } catch {
       // fall back to last stored catalog
@@ -362,10 +432,10 @@ export async function listServices() {
 }
 
 export async function replaceServices(services: PanelService[]) {
-  const db = await ensureDb();
-  db.services = services;
   servicesCache = { at: Date.now(), items: services };
-  await save(db);
+  await modifyDb(async (db) => {
+    db.services = services;
+  });
 }
 
 export function clearServicesCache() {
@@ -373,17 +443,17 @@ export function clearServicesCache() {
 }
 
 export async function createOrder(order: Omit<StoredOrder, "id" | "createdAt" | "updatedAt">) {
-  const db = await ensureDb();
-  const now = new Date().toISOString();
-  const row: StoredOrder = {
-    ...order,
-    id: randomBytes(6).toString("hex"),
-    createdAt: now,
-    updatedAt: now,
-  };
-  db.orders.unshift(row);
-  await save(db);
-  return row;
+  return modifyDb(async (db) => {
+    const now = new Date().toISOString();
+    const row: StoredOrder = {
+      ...order,
+      id: randomBytes(6).toString("hex"),
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.orders.unshift(row);
+    return row;
+  });
 }
 
 export async function listOrders(userId?: string) {
@@ -397,25 +467,25 @@ export async function getOrder(id: string) {
 }
 
 export async function updateOrder(id: string, patch: Partial<StoredOrder>) {
-  const db = await ensureDb();
-  const o = db.orders.find((x) => x.id === id);
-  if (!o) return null;
-  Object.assign(o, patch, { updatedAt: new Date().toISOString() });
-  await save(db);
-  return o;
+  return modifyDb(async (db) => {
+    const o = db.orders.find((x) => x.id === id);
+    if (!o) return null;
+    Object.assign(o, patch, { updatedAt: new Date().toISOString() });
+    return o;
+  });
 }
 
 export async function createFundRequest(input: Omit<FundRequest, "id" | "createdAt" | "status">) {
-  const db = await ensureDb();
-  const row: FundRequest = {
-    ...input,
-    id: randomBytes(6).toString("hex"),
-    status: "pending",
-    createdAt: new Date().toISOString(),
-  };
-  db.funds.unshift(row);
-  await save(db);
-  return row;
+  return modifyDb(async (db) => {
+    const row: FundRequest = {
+      ...input,
+      id: randomBytes(6).toString("hex"),
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    db.funds.unshift(row);
+    return row;
+  });
 }
 
 export async function listFunds() {
@@ -423,32 +493,32 @@ export async function listFunds() {
 }
 
 export async function approveFund(id: string) {
-  const db = await ensureDb();
-  const f = db.funds.find((x) => x.id === id);
-  if (!f || f.status !== "pending") throw new Error("Invalid fund request");
-  f.status = "approved";
-  const u = db.users.find((x) => x.id === f.userId);
-  if (!u) throw new Error("User missing");
-  u.balance = Math.round((u.balance + f.amount) * 10000) / 10000;
-  await pushLedger(db, {
-    userId: u.id,
-    type: "deposit",
-    amount: f.amount,
-    balanceAfter: u.balance,
-    note: `Deposit approved (${f.method})`,
-    refId: f.id,
+  return modifyDb(async (db) => {
+    const f = db.funds.find((x) => x.id === id);
+    if (!f || f.status !== "pending") throw new Error("Invalid fund request");
+    f.status = "approved";
+    const u = db.users.find((x) => x.id === f.userId);
+    if (!u) throw new Error("User missing");
+    u.balance = Math.round((u.balance + f.amount) * 10000) / 10000;
+    await pushLedger(db, {
+      userId: u.id,
+      type: "deposit",
+      amount: f.amount,
+      balanceAfter: u.balance,
+      note: `Deposit approved (${f.method})`,
+      refId: f.id,
+    });
+    return f;
   });
-  await save(db);
-  return f;
 }
 
 export async function rejectFund(id: string) {
-  const db = await ensureDb();
-  const f = db.funds.find((x) => x.id === id);
-  if (!f || f.status !== "pending") throw new Error("Invalid fund request");
-  f.status = "rejected";
-  await save(db);
-  return f;
+  return modifyDb(async (db) => {
+    const f = db.funds.find((x) => x.id === id);
+    if (!f || f.status !== "pending") throw new Error("Invalid fund request");
+    f.status = "rejected";
+    return f;
+  });
 }
 
 export async function listFundsForUser(userId: string) {
@@ -466,29 +536,29 @@ export async function createTicket(input: {
   subject: string;
   body: string;
 }) {
-  const db = await ensureDb();
-  const now = new Date().toISOString();
-  const ticket: StoredTicket = {
-    id: randomBytes(6).toString("hex"),
-    userId: input.userId,
-    username: input.username,
-    subject: input.subject.trim(),
-    status: "open",
-    messages: [
-      {
-        id: randomBytes(4).toString("hex"),
-        authorId: input.userId,
-        authorRole: "user",
-        body: input.body.trim(),
-        createdAt: now,
-      },
-    ],
-    createdAt: now,
-    updatedAt: now,
-  };
-  db.tickets.unshift(ticket);
-  await save(db);
-  return ticket;
+  return modifyDb(async (db) => {
+    const now = new Date().toISOString();
+    const ticket: StoredTicket = {
+      id: randomBytes(6).toString("hex"),
+      userId: input.userId,
+      username: input.username,
+      subject: input.subject.trim(),
+      status: "open",
+      messages: [
+        {
+          id: randomBytes(4).toString("hex"),
+          authorId: input.userId,
+          authorRole: "user",
+          body: input.body.trim(),
+          createdAt: now,
+        },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.tickets.unshift(ticket);
+    return ticket;
+  });
 }
 
 export async function listTickets(userId?: string) {
@@ -507,32 +577,32 @@ export async function replyTicket(input: {
   authorRole: "user" | "admin";
   body: string;
 }) {
-  const db = await ensureDb();
-  const ticket = db.tickets.find((t) => t.id === input.ticketId);
-  if (!ticket) throw new Error("Ticket not found");
-  if (ticket.status === "closed") throw new Error("Ticket closed");
-  const now = new Date().toISOString();
-  ticket.messages.push({
-    id: randomBytes(4).toString("hex"),
-    authorId: input.authorId,
-    authorRole: input.authorRole,
-    body: input.body.trim(),
-    createdAt: now,
+  return modifyDb(async (db) => {
+    const ticket = db.tickets.find((t) => t.id === input.ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+    if (ticket.status === "closed") throw new Error("Ticket closed");
+    const now = new Date().toISOString();
+    ticket.messages.push({
+      id: randomBytes(4).toString("hex"),
+      authorId: input.authorId,
+      authorRole: input.authorRole,
+      body: input.body.trim(),
+      createdAt: now,
+    });
+    ticket.status = input.authorRole === "admin" ? "answered" : "open";
+    ticket.updatedAt = now;
+    return ticket;
   });
-  ticket.status = input.authorRole === "admin" ? "answered" : "open";
-  ticket.updatedAt = now;
-  await save(db);
-  return ticket;
 }
 
 export async function setTicketStatus(id: string, status: StoredTicket["status"]) {
-  const db = await ensureDb();
-  const ticket = db.tickets.find((t) => t.id === id);
-  if (!ticket) throw new Error("Ticket not found");
-  ticket.status = status;
-  ticket.updatedAt = new Date().toISOString();
-  await save(db);
-  return ticket;
+  return modifyDb(async (db) => {
+    const ticket = db.tickets.find((t) => t.id === id);
+    if (!ticket) throw new Error("Ticket not found");
+    ticket.status = status;
+    ticket.updatedAt = new Date().toISOString();
+    return ticket;
+  });
 }
 
 export async function createRefill(input: {
@@ -541,20 +611,20 @@ export async function createRefill(input: {
   providerRefillId?: string;
   status?: StoredRefill["status"];
 }) {
-  const db = await ensureDb();
-  const now = new Date().toISOString();
-  const row: StoredRefill = {
-    id: randomBytes(6).toString("hex"),
-    orderId: input.orderId,
-    userId: input.userId,
-    providerRefillId: input.providerRefillId,
-    status: input.status || "pending",
-    createdAt: now,
-    updatedAt: now,
-  };
-  db.refills.unshift(row);
-  await save(db);
-  return row;
+  return modifyDb(async (db) => {
+    const now = new Date().toISOString();
+    const row: StoredRefill = {
+      id: randomBytes(6).toString("hex"),
+      orderId: input.orderId,
+      userId: input.userId,
+      providerRefillId: input.providerRefillId,
+      status: input.status || "pending",
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.refills.unshift(row);
+    return row;
+  });
 }
 
 export async function getRefill(id: string) {
@@ -563,12 +633,12 @@ export async function getRefill(id: string) {
 }
 
 export async function updateRefill(id: string, patch: Partial<StoredRefill>) {
-  const db = await ensureDb();
-  const r = db.refills.find((x) => x.id === id);
-  if (!r) return null;
-  Object.assign(r, patch, { updatedAt: new Date().toISOString() });
-  await save(db);
-  return r;
+  return modifyDb(async (db) => {
+    const r = db.refills.find((x) => x.id === id);
+    if (!r) return null;
+    Object.assign(r, patch, { updatedAt: new Date().toISOString() });
+    return r;
+  });
 }
 
 export async function listRefills(userId?: string) {
