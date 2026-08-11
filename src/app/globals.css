@@ -1,0 +1,213 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #070b14;
+  --color-bg-elevated: #0e1524;
+  --color-bg-card: #121a2b;
+  --color-border: #243049;
+  --color-text: #e8eefc;
+  --color-muted: #93a0b8;
+  --color-accent: #22d3ee;
+  --color-accent-2: #818cf8;
+  --color-warn: #f59e0b;
+  --color-success: #22c55e;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(900px 500px at 10% -10%, rgba(34, 211, 238, 0.12), transparent 55%),
+    radial-gradient(800px 480px at 90% 0%, rgba(129, 140, 248, 0.14), transparent 50%),
+    linear-gradient(180deg, #070b14 0%, #0a1220 50%, #070b14 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container-page {
+  width: min(1120px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #22d3ee, #6366f1);
+  padding: 0.8rem 1.25rem;
+  font-weight: 700;
+  color: #041016;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.8rem 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.btn-ghost:hover {
+  border-color: rgba(34, 211, 238, 0.45);
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  background: rgba(18, 26, 43, 0.85);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(8px);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.prose-panel h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  scroll-margin-top: 5rem;
+}
+
+.prose-panel h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-panel p,
+.prose-panel li {
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.prose-panel ul,
+.prose-panel ol {
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+}
+
+.prose-panel a {
+  color: #67e8f9;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.9rem;
+}
+
+.prose-panel th,
+.prose-panel td {
+  border: 1px solid var(--color-border);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose-panel th {
+  background: rgba(34, 211, 238, 0.08);
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.prose-panel td {
+  color: var(--color-muted);
+}
+
+.rank-math-toc {
+  border: 1px solid var(--color-border);
+  background: rgba(10, 18, 32, 0.8);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.rank-math-toc ol {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--color-muted);
+}
+
+.rank-math-toc a {
+  color: #67e8f9;
+  text-decoration: none;
+}
+
+.rank-math-toc a:hover {
+  text-decoration: underline;
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: #0a1220;
+  padding: 0.75rem 0.9rem;
+  color: var(--color-text);
+}
+
+.input:focus {
+  outline: 2px solid rgba(34, 211, 238, 0.35);
+  border-color: rgba(34, 211, 238, 0.55);
+}
+
+.table-admin {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table-admin th,
+.table-admin td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.7rem 0.6rem;
+  text-align: left;
+}
+
+.table-admin th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
