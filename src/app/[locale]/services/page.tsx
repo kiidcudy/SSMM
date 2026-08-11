@@ -6,7 +6,8 @@ import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { createMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/JsonLd";
 import { LocaleLink } from "@/components/LocaleLink";
-import { SEED_SERVICES, servicesByCategory } from "@/lib/data/catalog";
+import { servicesByCategory } from "@/lib/data/catalog";
+import { listServices } from "@/lib/store/db";
 import { getPageChrome } from "@/lib/i18n/pages/chrome";
 
 export async function generateMetadata({
@@ -38,7 +39,8 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
   const locale = raw as Locale;
   const t = getDictionary(locale);
   const c = getPageChrome(locale);
-  const grouped = servicesByCategory();
+  const services = await listServices();
+  const grouped = servicesByCategory(services);
 
   return (
     <>
@@ -64,43 +66,49 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
           </Link>
         </div>
         <p className="mt-4 text-sm text-[var(--color-muted)]">
-          {SEED_SERVICES.length}+ · {c.servicesNote}
+          {services.length}+ · {c.servicesNote}
         </p>
       </section>
 
       <section className="container-page space-y-10 pb-20">
-        {Object.entries(grouped).map(([category, services]) => (
-          <div key={category}>
-            <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold">{category}</h2>
-            <div className="mt-4 overflow-x-auto rounded-2xl border border-[var(--color-border)]">
-              <table className="w-full min-w-[640px] text-left text-sm">
-                <thead className="bg-[#0a1220] text-xs uppercase tracking-wide text-[var(--color-muted)]">
-                  <tr>
-                    <th className="px-4 py-3">{c.servicesColId}</th>
-                    <th className="px-4 py-3">{c.servicesColService}</th>
-                    <th className="px-4 py-3">{c.servicesColRate}</th>
-                    <th className="px-4 py-3">{c.servicesColMin}</th>
-                    <th className="px-4 py-3">{c.servicesColMax}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.map((s) => (
-                    <tr key={s.id} className="border-t border-[var(--color-border)]">
-                      <td className="px-4 py-3 text-cyan-300">{s.id}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium">{s.name}</p>
-                        <p className="mt-1 text-xs text-[var(--color-muted)]">{s.description}</p>
-                      </td>
-                      <td className="px-4 py-3">${s.rate.toFixed(2)}</td>
-                      <td className="px-4 py-3">{s.min}</td>
-                      <td className="px-4 py-3">{s.max}</td>
+        {services.length === 0 ? (
+          <p className="text-[var(--color-muted)]">Services are syncing from the provider. Check back shortly.</p>
+        ) : (
+          Object.entries(grouped).map(([category, rows]) => (
+            <div key={category}>
+              <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold">{category}</h2>
+              <div className="mt-4 overflow-x-auto rounded-2xl border border-[var(--color-border)]">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="bg-[#0a1220] text-xs uppercase tracking-wide text-[var(--color-muted)]">
+                    <tr>
+                      <th className="px-4 py-3">{c.servicesColId}</th>
+                      <th className="px-4 py-3">{c.servicesColService}</th>
+                      <th className="px-4 py-3">{c.servicesColRate}</th>
+                      <th className="px-4 py-3">{c.servicesColMin}</th>
+                      <th className="px-4 py-3">{c.servicesColMax}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {rows.map((s) => (
+                      <tr key={s.id} className="border-t border-[var(--color-border)]">
+                        <td className="px-4 py-3 text-cyan-300">{s.id}</td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium">{s.name}</p>
+                          {s.description ? (
+                            <p className="mt-1 text-xs text-[var(--color-muted)]">{s.description}</p>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3">${s.rate.toFixed(4)}</td>
+                        <td className="px-4 py-3">{s.min}</td>
+                        <td className="px-4 py-3">{s.max}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </section>
     </>
   );

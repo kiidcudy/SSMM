@@ -2,7 +2,9 @@ import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
-import { SEED_SERVICES, type PanelService } from "@/lib/data/catalog";
+import { type PanelService } from "@/lib/data/catalog";
+import { isProviderConfigured } from "@/lib/provider/perfectpanel";
+import { fetchMappedProviderServices } from "@/lib/provider/sync-services";
 
 export type StoredUser = {
   id: string;
@@ -63,6 +65,8 @@ function resolvePaths() {
 }
 
 let memoryDb: DbShape | null = null;
+let servicesCache: { at: number; items: PanelService[] } | null = null;
+const SERVICES_TTL_MS = 10 * 60 * 1000;
 
 function hashPassword(password: string, salt?: string): string {
   const s = salt || randomBytes(16).toString("hex");
@@ -147,7 +151,7 @@ function emptyDb(): DbShape {
     users: [makeAdminUser(new Date().toISOString())],
     orders: [],
     funds: [],
-    services: SEED_SERVICES,
+    services: [],
   };
 }
 
@@ -258,13 +262,33 @@ export async function setUserBalance(userId: string, balance: number) {
 }
 
 export async function listServices() {
+  if (isProviderConfigured()) {
+    if (servicesCache && Date.now() - servicesCache.at < SERVICES_TTL_MS) {
+      return servicesCache.items;
+    }
+    try {
+      const items = await fetchMappedProviderServices();
+      servicesCache = { at: Date.now(), items };
+      const db = await ensureDb();
+      db.services = items;
+      await save(db);
+      return items;
+    } catch {
+      // fall back to last stored catalog
+    }
+  }
   return (await ensureDb()).services;
 }
 
 export async function replaceServices(services: PanelService[]) {
   const db = await ensureDb();
   db.services = services;
+  servicesCache = { at: Date.now(), items: services };
   await save(db);
+}
+
+export function clearServicesCache() {
+  servicesCache = null;
 }
 
 export async function createOrder(order: Omit<StoredOrder, "id" | "createdAt" | "updatedAt">) {

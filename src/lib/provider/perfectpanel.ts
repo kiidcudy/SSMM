@@ -23,7 +23,7 @@ type ProviderConfig = {
 function config(): ProviderConfig | null {
   const apiUrl = process.env.PROVIDER_API_URL?.trim();
   const apiKey = process.env.PROVIDER_API_KEY?.trim();
-  if (!apiUrl || !apiKey) return null;
+  if (!apiUrl || !apiKey || apiKey === "pending") return null;
   return { apiUrl, apiKey };
 }
 
