@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SITE, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { LocaleLink } from "@/components/LocaleLink";
@@ -18,11 +19,15 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--color-border)]/80 bg-[#070b14]/85 backdrop-blur-md">
       <div className="container-page flex items-center justify-between gap-4 py-3">
-        <LocaleLink href="/" locale={locale} className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg font-bold">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-indigo-500 text-sm text-slate-950">
-            S
-          </span>
-          {SITE.name}
+        <LocaleLink href="/" locale={locale} className="flex items-center" aria-label={SITE.name}>
+          <Image
+            src="/logo.png"
+            alt={SITE.name}
+            width={152}
+            height={34}
+            className="h-8 w-auto"
+            priority
+          />
         </LocaleLink>
         <nav className="hidden items-center gap-4 text-sm text-[var(--color-muted)] lg:flex">
           {links.map((l) => (

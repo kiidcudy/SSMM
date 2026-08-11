@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SITE, PAYMENT_METHODS, type Locale } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { LocaleLink } from "@/components/LocaleLink";
@@ -8,7 +9,9 @@ export function SiteFooter({ locale }: { locale: Locale }) {
     <footer className="mt-20 border-t border-[var(--color-border)] bg-[#060910]">
       <div className="container-page grid gap-10 py-12 md:grid-cols-4">
         <div>
-          <p className="font-[family-name:var(--font-display)] text-lg font-bold">{SITE.name}</p>
+          <LocaleLink href="/" locale={locale} aria-label={SITE.name}>
+            <Image src="/logo.png" alt={SITE.name} width={152} height={34} className="h-8 w-auto" />
+          </LocaleLink>
           <p className="mt-2 text-sm text-[var(--color-muted)]">{t.footer.tagline}</p>
           <p className="mt-4 text-sm text-[var(--color-muted)]">
             WhatsApp: {SITE.whatsappDisplay}

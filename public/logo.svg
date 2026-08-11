@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="168" viewBox="0 0 760 168" fill="none">
+  <defs>
+    <linearGradient id="g" x1="36" y1="24" x2="128" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="55%" stop-color="#3B9EF5"/>
+      <stop offset="100%" stop-color="#4F6FE8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Stroke S mark — transparent, no square plate -->
+  <path
+    d="M118 42C112 30 96 24 78 24C56 24 42 38 42 56C42 78 62 86 86 94C108 102 124 112 124 130C124 150 106 158 84 158C64 158 48 150 42 138"
+    stroke="url(#g)"
+    stroke-width="26"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="168" y="100" fill="#F8FAFC" font-size="56" font-weight="800" letter-spacing="2">SSMM</text>
+    <text x="368" y="100" fill="#7DD3FC" font-size="56" font-weight="600" letter-spacing="1">Panel</text>
+  </g>
+  <rect x="370" y="114" width="130" height="3" rx="1.5" fill="#22D3EE"/>
+</svg>
