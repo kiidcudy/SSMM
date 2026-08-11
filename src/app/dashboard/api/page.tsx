@@ -1,8 +1,9 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { readSession } from "@/lib/auth/session";
 import { findUserById } from "@/lib/store/db";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { SITE } from "@/lib/site";
-import { redirect } from "next/navigation";
 
 export default async function DashboardApiPage() {
   const session = await readSession();
@@ -35,10 +36,14 @@ export default async function DashboardApiPage() {
           <li>action=cancel (orders)</li>
         </ul>
         <p className="mt-3">
-          Docs: <a className="text-cyan-300 hover:underline" href="/api-docs">/api-docs</a> · alias{" "}
-          <a className="text-cyan-300 hover:underline" href="/api">
+          Docs:{" "}
+          <Link className="text-cyan-300 hover:underline" href="/api-docs">
+            /api-docs
+          </Link>{" "}
+          · alias{" "}
+          <Link className="text-cyan-300 hover:underline" href="/api">
             /api
-          </a>
+          </Link>
         </p>
       </div>
     </div>
