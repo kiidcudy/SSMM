@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PanelService } from "@/lib/data/catalog";
 import { chargeFor } from "@/lib/data/catalog";
 import { detectPlatform } from "@/lib/platforms";
@@ -41,6 +41,7 @@ const TEXTAREA_FIELDS = new Set<ExtraField>([
 export function NewOrderForm({
   services,
   labels,
+  aside,
 }: {
   services: PanelService[];
   labels: {
@@ -51,9 +52,8 @@ export function NewOrderForm({
     quantity: string;
     charge: string;
     placeOrder: string;
-    orderWarning: string;
-    orderPublicHint: string;
   };
+  aside?: ReactNode;
 }) {
   const categories = useMemo(
     () => Array.from(new Set(services.map((s) => s.category))),
@@ -205,14 +205,9 @@ export function NewOrderForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-        {labels.orderWarning}
-      </div>
-      <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
-        {labels.orderPublicHint}
-      </div>
-
+    <form onSubmit={onSubmit}>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(240px,0.8fr)] lg:items-start">
+        <div className="order-1 space-y-4">
       <div ref={searchRef} className="relative z-40">
         <label className="mb-1 block text-sm text-[#93a0b8]">Search service</label>
         <input
@@ -497,6 +492,12 @@ export function NewOrderForm({
       <button type="submit" className="btn-primary" disabled={loading || !service}>
         {loading ? "Placing…" : labels.placeOrder}
       </button>
+        </div>
+
+        {aside ? (
+          <aside className="order-2 space-y-3 lg:sticky lg:top-4">{aside}</aside>
+        ) : null}
+      </div>
     </form>
   );
 }
