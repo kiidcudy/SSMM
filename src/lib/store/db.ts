@@ -74,32 +74,74 @@ function newApiKey(): string {
   return randomBytes(24).toString("hex");
 }
 
+function adminCredentials() {
+  return {
+    username: (process.env.ADMIN_USERNAME || "admin").trim(),
+    password: process.env.ADMIN_PASSWORD || "admin123",
+  };
+}
+
+function makeAdminUser(now: string): StoredUser {
+  const { username, password } = adminCredentials();
+  return {
+    id: "admin-1",
+    username,
+    email: "admin@ssmmpanel.com",
+    passwordHash: hashPassword(password),
+    role: "admin",
+    balance: 0,
+    spent: 0,
+    status: "active",
+    apiKey: newApiKey(),
+    createdAt: now,
+    lastAuthAt: now,
+    discountPercent: 0,
+  };
+}
+
+/** Keep admin username/password aligned with env (needed on Vercel). */
+async function syncAdminFromEnv(db: DbShape): Promise<DbShape> {
+  const { username, password } = adminCredentials();
+  const now = new Date().toISOString();
+  let admin = db.users.find((u) => u.id === "admin-1" || u.role === "admin");
+  let changed = false;
+
+  if (!admin) {
+    db.users.unshift(makeAdminUser(now));
+    changed = true;
+  } else {
+    if (admin.username !== username) {
+      admin.username = username;
+      changed = true;
+    }
+    if (!verifyPassword(password, admin.passwordHash)) {
+      admin.passwordHash = hashPassword(password);
+      changed = true;
+    }
+    if (admin.role !== "admin") {
+      admin.role = "admin";
+      changed = true;
+    }
+    if (admin.status !== "active") {
+      admin.status = "active";
+      changed = true;
+    }
+  }
+
+  if (changed) await save(db);
+  return db;
+}
+
 async function ensureDb(): Promise<DbShape> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
     const raw = await fs.readFile(DB_FILE, "utf8");
-    return JSON.parse(raw) as DbShape;
+    const db = JSON.parse(raw) as DbShape;
+    return syncAdminFromEnv(db);
   } catch {
-    const adminUser = process.env.ADMIN_USERNAME || "admin";
-    const adminPass = process.env.ADMIN_PASSWORD || "admin123";
     const now = new Date().toISOString();
     const db: DbShape = {
-      users: [
-        {
-          id: "admin-1",
-          username: adminUser,
-          email: "admin@ssmmpanel.com",
-          passwordHash: hashPassword(adminPass),
-          role: "admin",
-          balance: 0,
-          spent: 0,
-          status: "active",
-          apiKey: newApiKey(),
-          createdAt: now,
-          lastAuthAt: now,
-          discountPercent: 0,
-        },
-      ],
+      users: [makeAdminUser(now)],
       orders: [],
       funds: [],
       services: SEED_SERVICES,

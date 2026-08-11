@@ -29,12 +29,12 @@ export function LoginForm({ labels }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as { error?: string; user?: { role?: string } };
       if (!res.ok) {
         setError(data.error || labels.error);
         return;
       }
-      router.push("/dashboard/new-order");
+      router.push(data.user?.role === "admin" ? "/admin" : "/dashboard/new-order");
       router.refresh();
     } catch {
       setError(labels.error);
