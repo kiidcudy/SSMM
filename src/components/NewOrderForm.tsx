@@ -38,15 +38,25 @@ export function NewOrderForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const boxRef = useRef<HTMLDivElement>(null);
+  const [catOpen, setCatOpen] = useState(false);
+  const [svcOpen, setSvcOpen] = useState(false);
+  const [catQuery, setCatQuery] = useState("");
+  const [svcQuery, setSvcQuery] = useState("");
+  const catRef = useRef<HTMLDivElement>(null);
+  const svcRef = useRef<HTMLDivElement>(null);
 
   const charge = service ? chargeFor(service, quantity) : 0;
+  const categoryPlatform = detectPlatform(category);
   const servicePlatform = detectPlatform(service?.category, service?.name);
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  const visibleCategories = useMemo(() => {
+    const q = catQuery.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) => c.toLowerCase().includes(q));
+  }, [categories, catQuery]);
+
+  const visibleServices = useMemo(() => {
+    const q = svcQuery.trim().toLowerCase();
     if (!q) return filtered;
     return filtered.filter(
       (s) =>
@@ -54,11 +64,13 @@ export function NewOrderForm({
         s.name.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q),
     );
-  }, [filtered, query]);
+  }, [filtered, svcQuery]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!catRef.current?.contains(t)) setCatOpen(false);
+      if (!svcRef.current?.contains(t)) setSvcOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -66,8 +78,10 @@ export function NewOrderForm({
 
   function onCategoryChange(next: string) {
     setCategory(next);
-    setOpen(false);
-    setQuery("");
+    setCatOpen(false);
+    setCatQuery("");
+    setSvcOpen(false);
+    setSvcQuery("");
     const first = services.find((s) => s.category === next);
     if (first) {
       setServiceId(first.id);
@@ -77,8 +91,8 @@ export function NewOrderForm({
 
   function onServiceChange(id: number) {
     setServiceId(id);
-    setOpen(false);
-    setQuery("");
+    setSvcOpen(false);
+    setSvcQuery("");
     const s = services.find((x) => x.id === id);
     if (s) setQuantity(s.min);
   }
@@ -115,33 +129,77 @@ export function NewOrderForm({
         {labels.orderWarning}
       </div>
 
-      <div>
+      <div ref={catRef}>
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.category}</label>
-        <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-            <PlatformIcon platform={detectPlatform(category)} size="sm" />
-          </span>
-          <select
-            className="input pl-10"
-            value={category}
-            onChange={(e) => onCategoryChange(e.target.value)}
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
+        <button
+          type="button"
+          className="input flex w-full items-center gap-2.5 text-left"
+          onClick={() => {
+            setCatOpen((v) => !v);
+            setSvcOpen(false);
+          }}
+          aria-expanded={catOpen}
+        >
+          {category ? (
+            <>
+              <PlatformIcon platform={categoryPlatform} size="sm" />
+              <span className="min-w-0 flex-1 truncate">{category}</span>
+            </>
+          ) : (
+            <span className="text-[#93a0b8]">Select category</span>
+          )}
+          <span className="shrink-0 text-[#93a0b8]">{catOpen ? "▴" : "▾"}</span>
+        </button>
+
+        {catOpen ? (
+          <div className="relative z-30 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
+            <div className="border-b border-[#243049] p-2">
+              <input
+                className="input"
+                value={catQuery}
+                onChange={(e) => setCatQuery(e.target.value)}
+                placeholder="Search category…"
+                autoFocus
+              />
+            </div>
+            <ul className="max-h-72 overflow-y-auto py-1">
+              {visibleCategories.length === 0 ? (
+                <li className="px-3 py-4 text-sm text-[#93a0b8]">No categories</li>
+              ) : (
+                visibleCategories.map((c) => {
+                  const platform = detectPlatform(c);
+                  const active = c === category;
+                  return (
+                    <li key={c}>
+                      <button
+                        type="button"
+                        onClick={() => onCategoryChange(c)}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-[#182236] ${
+                          active ? "bg-cyan-500/10 text-cyan-100" : "text-[#e8eefc]"
+                        }`}
+                      >
+                        <PlatformIcon platform={platform} size="md" />
+                        <span className="min-w-0 flex-1 truncate">{c}</span>
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
-      <div ref={boxRef}>
+      <div ref={svcRef}>
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.service}</label>
         <button
           type="button"
-          className="input flex w-full items-center gap-2 text-left"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
+          className="input flex w-full items-center gap-2.5 text-left"
+          onClick={() => {
+            setSvcOpen((v) => !v);
+            setCatOpen(false);
+          }}
+          aria-expanded={svcOpen}
         >
           {service ? (
             <>
@@ -153,25 +211,25 @@ export function NewOrderForm({
           ) : (
             <span className="text-[#93a0b8]">Select service</span>
           )}
-          <span className="ml-auto text-[#93a0b8]">{open ? "▴" : "▾"}</span>
+          <span className="shrink-0 text-[#93a0b8]">{svcOpen ? "▴" : "▾"}</span>
         </button>
 
-        {open ? (
+        {svcOpen ? (
           <div className="relative z-20 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
             <div className="border-b border-[#243049] p-2">
               <input
                 className="input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={svcQuery}
+                onChange={(e) => setSvcQuery(e.target.value)}
                 placeholder="Search service…"
                 autoFocus
               />
             </div>
             <ul className="max-h-72 overflow-y-auto py-1">
-              {visible.length === 0 ? (
+              {visibleServices.length === 0 ? (
                 <li className="px-3 py-4 text-sm text-[#93a0b8]">No services</li>
               ) : (
-                visible.map((s) => {
+                visibleServices.map((s) => {
                   const platform = detectPlatform(s.category, s.name);
                   const active = s.id === service?.id;
                   return (
@@ -179,7 +237,7 @@ export function NewOrderForm({
                       <button
                         type="button"
                         onClick={() => onServiceChange(s.id)}
-                        className={`flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#182236] ${
+                        className={`flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-[#182236] ${
                           active ? "bg-cyan-500/10 text-cyan-100" : "text-[#e8eefc]"
                         }`}
                       >
@@ -203,7 +261,7 @@ export function NewOrderForm({
 
       {service ? (
         <div className="rounded-lg border border-[#243049] bg-[#121a2b] p-4 text-sm text-[#93a0b8]">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <PlatformIcon platform={servicePlatform} size="md" />
             <p className="font-semibold text-[#e8eefc]">{labels.description}</p>
           </div>
