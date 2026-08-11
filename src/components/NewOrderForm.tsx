@@ -40,14 +40,30 @@ export function NewOrderForm({
   const [loading, setLoading] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [svcOpen, setSvcOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [catQuery, setCatQuery] = useState("");
   const [svcQuery, setSvcQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const catRef = useRef<HTMLDivElement>(null);
   const svcRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const charge = service ? chargeFor(service, quantity) : 0;
   const categoryPlatform = detectPlatform(category);
   const servicePlatform = detectPlatform(service?.category, service?.name);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return services
+      .filter(
+        (s) =>
+          String(s.id).includes(q) ||
+          s.name.toLowerCase().includes(q) ||
+          s.category.toLowerCase().includes(q),
+      )
+      .slice(0, 40);
+  }, [services, searchQuery]);
 
   const visibleCategories = useMemo(() => {
     const q = catQuery.trim().toLowerCase();
@@ -71,10 +87,23 @@ export function NewOrderForm({
       const t = e.target as Node;
       if (!catRef.current?.contains(t)) setCatOpen(false);
       if (!svcRef.current?.contains(t)) setSvcOpen(false);
+      if (!searchRef.current?.contains(t)) setSearchOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
+
+  function selectService(s: PanelService) {
+    setCategory(s.category);
+    setServiceId(s.id);
+    setQuantity(s.min);
+    setCatOpen(false);
+    setSvcOpen(false);
+    setSearchOpen(false);
+    setCatQuery("");
+    setSvcQuery("");
+    setSearchQuery("");
+  }
 
   function onCategoryChange(next: string) {
     setCategory(next);
@@ -90,11 +119,13 @@ export function NewOrderForm({
   }
 
   function onServiceChange(id: number) {
-    setServiceId(id);
-    setSvcOpen(false);
-    setSvcQuery("");
     const s = services.find((x) => x.id === id);
-    if (s) setQuantity(s.min);
+    if (s) selectService(s);
+    else {
+      setServiceId(id);
+      setSvcOpen(false);
+      setSvcQuery("");
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -129,6 +160,57 @@ export function NewOrderForm({
         {labels.orderWarning}
       </div>
 
+      <div ref={searchRef} className="relative z-40">
+        <label className="mb-1 block text-sm text-[#93a0b8]">Search service</label>
+        <input
+          className="input"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setSearchOpen(true);
+            setCatOpen(false);
+            setSvcOpen(false);
+          }}
+          onFocus={() => {
+            if (searchQuery.trim()) setSearchOpen(true);
+          }}
+          placeholder="Service ID or name… (e.g. 10038 or Instagram Likes)"
+          autoComplete="off"
+        />
+        {searchOpen && searchQuery.trim() ? (
+          <div className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
+            <ul className="max-h-72 overflow-y-auto py-1">
+              {searchResults.length === 0 ? (
+                <li className="px-3 py-4 text-sm text-[#93a0b8]">No matching services</li>
+              ) : (
+                searchResults.map((s) => {
+                  const platform = detectPlatform(s.category, s.name);
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => selectService(s)}
+                        className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-sm text-[#e8eefc] hover:bg-[#182236]"
+                      >
+                        <PlatformIcon platform={platform} size="md" className="mt-0.5" />
+                        <span className="min-w-0 flex-1 leading-snug">
+                          <span className="text-cyan-300">{s.id}</span>
+                          {" — "}
+                          {s.name}
+                          <span className="mt-0.5 block text-xs text-[#93a0b8]">
+                            {s.category} · ${s.rate}/1K
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+
       <div ref={catRef}>
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.category}</label>
         <button
@@ -137,6 +219,7 @@ export function NewOrderForm({
           onClick={() => {
             setCatOpen((v) => !v);
             setSvcOpen(false);
+            setSearchOpen(false);
           }}
           aria-expanded={catOpen}
         >
@@ -198,6 +281,7 @@ export function NewOrderForm({
           onClick={() => {
             setSvcOpen((v) => !v);
             setCatOpen(false);
+            setSearchOpen(false);
           }}
           aria-expanded={svcOpen}
         >
