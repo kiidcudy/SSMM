@@ -48,11 +48,54 @@ export type FundRequest = {
   createdAt: string;
 };
 
+export type LedgerEntry = {
+  id: string;
+  userId: string;
+  type: "deposit" | "order" | "refund" | "adjust";
+  amount: number;
+  balanceAfter: number;
+  note: string;
+  refId?: string;
+  createdAt: string;
+};
+
+export type TicketMessage = {
+  id: string;
+  authorId: string;
+  authorRole: "user" | "admin";
+  body: string;
+  createdAt: string;
+};
+
+export type StoredTicket = {
+  id: string;
+  userId: string;
+  username: string;
+  subject: string;
+  status: "open" | "answered" | "closed";
+  messages: TicketMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StoredRefill = {
+  id: string;
+  orderId: string;
+  userId: string;
+  providerRefillId?: string;
+  status: "pending" | "completed" | "rejected" | "error";
+  createdAt: string;
+  updatedAt: string;
+};
+
 type DbShape = {
   users: StoredUser[];
   orders: StoredOrder[];
   funds: FundRequest[];
   services: PanelService[];
+  tickets: StoredTicket[];
+  ledger: LedgerEntry[];
+  refills: StoredRefill[];
 };
 
 /** Vercel/Lambda: cwd is read-only — use /tmp. Local: project .data */
@@ -152,17 +195,31 @@ function emptyDb(): DbShape {
     orders: [],
     funds: [],
     services: [],
+    tickets: [],
+    ledger: [],
+    refills: [],
   };
 }
 
+function migrateDb(db: DbShape): DbShape {
+  if (!Array.isArray(db.tickets)) db.tickets = [];
+  if (!Array.isArray(db.ledger)) db.ledger = [];
+  if (!Array.isArray(db.refills)) db.refills = [];
+  if (!Array.isArray(db.funds)) db.funds = [];
+  if (!Array.isArray(db.orders)) db.orders = [];
+  if (!Array.isArray(db.services)) db.services = [];
+  if (!Array.isArray(db.users)) db.users = [];
+  return db;
+}
+
 async function ensureDb(): Promise<DbShape> {
-  if (memoryDb) return syncAdminFromEnv(memoryDb);
+  if (memoryDb) return syncAdminFromEnv(migrateDb(memoryDb));
 
   const { dataDir, dbFile } = resolvePaths();
   try {
     await fs.mkdir(dataDir, { recursive: true });
     const raw = await fs.readFile(dbFile, "utf8");
-    const db = JSON.parse(raw) as DbShape;
+    const db = migrateDb(JSON.parse(raw) as DbShape);
     memoryDb = db;
     return syncAdminFromEnv(db);
   } catch {
@@ -240,7 +297,23 @@ export async function touchAuth(userId: string) {
   await save(db);
 }
 
-export async function adjustBalance(userId: string, delta: number, spentDelta = 0) {
+async function pushLedger(
+  db: DbShape,
+  input: Omit<LedgerEntry, "id" | "createdAt" | "balanceAfter"> & { balanceAfter: number },
+) {
+  db.ledger.unshift({
+    ...input,
+    id: randomBytes(6).toString("hex"),
+    createdAt: new Date().toISOString(),
+  });
+}
+
+export async function adjustBalance(
+  userId: string,
+  delta: number,
+  spentDelta = 0,
+  meta?: { type?: LedgerEntry["type"]; note?: string; refId?: string },
+) {
   const db = await ensureDb();
   const u = db.users.find((x) => x.id === userId);
   if (!u) throw new Error("User not found");
@@ -248,6 +321,14 @@ export async function adjustBalance(userId: string, delta: number, spentDelta = 
   if (next < -0.00001) throw new Error("Insufficient balance");
   u.balance = Math.max(0, next);
   u.spent = Math.round((u.spent + spentDelta) * 10000) / 10000;
+  await pushLedger(db, {
+    userId,
+    type: meta?.type || (delta >= 0 ? "deposit" : "order"),
+    amount: delta,
+    balanceAfter: u.balance,
+    note: meta?.note || (delta >= 0 ? "Balance credit" : "Order charge"),
+    refId: meta?.refId,
+  });
   await save(db);
   return u;
 }
@@ -349,8 +430,150 @@ export async function approveFund(id: string) {
   const u = db.users.find((x) => x.id === f.userId);
   if (!u) throw new Error("User missing");
   u.balance = Math.round((u.balance + f.amount) * 10000) / 10000;
+  await pushLedger(db, {
+    userId: u.id,
+    type: "deposit",
+    amount: f.amount,
+    balanceAfter: u.balance,
+    note: `Deposit approved (${f.method})`,
+    refId: f.id,
+  });
   await save(db);
   return f;
+}
+
+export async function rejectFund(id: string) {
+  const db = await ensureDb();
+  const f = db.funds.find((x) => x.id === id);
+  if (!f || f.status !== "pending") throw new Error("Invalid fund request");
+  f.status = "rejected";
+  await save(db);
+  return f;
+}
+
+export async function listFundsForUser(userId: string) {
+  return (await ensureDb()).funds.filter((f) => f.userId === userId);
+}
+
+export async function listLedger(userId?: string) {
+  const db = await ensureDb();
+  return userId ? db.ledger.filter((e) => e.userId === userId) : db.ledger;
+}
+
+export async function createTicket(input: {
+  userId: string;
+  username: string;
+  subject: string;
+  body: string;
+}) {
+  const db = await ensureDb();
+  const now = new Date().toISOString();
+  const ticket: StoredTicket = {
+    id: randomBytes(6).toString("hex"),
+    userId: input.userId,
+    username: input.username,
+    subject: input.subject.trim(),
+    status: "open",
+    messages: [
+      {
+        id: randomBytes(4).toString("hex"),
+        authorId: input.userId,
+        authorRole: "user",
+        body: input.body.trim(),
+        createdAt: now,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  };
+  db.tickets.unshift(ticket);
+  await save(db);
+  return ticket;
+}
+
+export async function listTickets(userId?: string) {
+  const db = await ensureDb();
+  return userId ? db.tickets.filter((t) => t.userId === userId) : db.tickets;
+}
+
+export async function getTicket(id: string) {
+  const db = await ensureDb();
+  return db.tickets.find((t) => t.id === id) ?? null;
+}
+
+export async function replyTicket(input: {
+  ticketId: string;
+  authorId: string;
+  authorRole: "user" | "admin";
+  body: string;
+}) {
+  const db = await ensureDb();
+  const ticket = db.tickets.find((t) => t.id === input.ticketId);
+  if (!ticket) throw new Error("Ticket not found");
+  if (ticket.status === "closed") throw new Error("Ticket closed");
+  const now = new Date().toISOString();
+  ticket.messages.push({
+    id: randomBytes(4).toString("hex"),
+    authorId: input.authorId,
+    authorRole: input.authorRole,
+    body: input.body.trim(),
+    createdAt: now,
+  });
+  ticket.status = input.authorRole === "admin" ? "answered" : "open";
+  ticket.updatedAt = now;
+  await save(db);
+  return ticket;
+}
+
+export async function setTicketStatus(id: string, status: StoredTicket["status"]) {
+  const db = await ensureDb();
+  const ticket = db.tickets.find((t) => t.id === id);
+  if (!ticket) throw new Error("Ticket not found");
+  ticket.status = status;
+  ticket.updatedAt = new Date().toISOString();
+  await save(db);
+  return ticket;
+}
+
+export async function createRefill(input: {
+  orderId: string;
+  userId: string;
+  providerRefillId?: string;
+  status?: StoredRefill["status"];
+}) {
+  const db = await ensureDb();
+  const now = new Date().toISOString();
+  const row: StoredRefill = {
+    id: randomBytes(6).toString("hex"),
+    orderId: input.orderId,
+    userId: input.userId,
+    providerRefillId: input.providerRefillId,
+    status: input.status || "pending",
+    createdAt: now,
+    updatedAt: now,
+  };
+  db.refills.unshift(row);
+  await save(db);
+  return row;
+}
+
+export async function getRefill(id: string) {
+  const db = await ensureDb();
+  return db.refills.find((r) => r.id === id) ?? null;
+}
+
+export async function updateRefill(id: string, patch: Partial<StoredRefill>) {
+  const db = await ensureDb();
+  const r = db.refills.find((x) => x.id === id);
+  if (!r) return null;
+  Object.assign(r, patch, { updatedAt: new Date().toISOString() });
+  await save(db);
+  return r;
+}
+
+export async function listRefills(userId?: string) {
+  const db = await ensureDb();
+  return userId ? db.refills.filter((r) => r.userId === userId) : db.refills;
 }
 
 export function toSessionUser(u: StoredUser) {

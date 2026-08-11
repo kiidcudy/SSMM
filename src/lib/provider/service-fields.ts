@@ -122,6 +122,14 @@ export function fieldsForKind(kind: ServiceKind): {
   }
 }
 
+export function fieldsForService(service: { type: ServiceKind; dripfeed?: boolean }) {
+  const base = fieldsForKind(service.type);
+  if (!service.dripfeed && service.type !== "web_traffic") return base;
+  const extras = [...base.extras];
+  if (!extras.includes("runs")) extras.push("runs", "interval");
+  return { ...base, extras };
+}
+
 export function countLines(text: string): number {
   return text
     .split(/\r?\n/)

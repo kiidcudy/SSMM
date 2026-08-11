@@ -1,5 +1,6 @@
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { AddFundsForm } from "@/components/AddFundsForm";
+import { DepositHistory } from "@/components/DepositHistory";
 
 export default function AddFundsPage() {
   const t = getDictionary("en");
@@ -13,6 +14,7 @@ export default function AddFundsPage() {
       <div className="mt-6">
         <AddFundsForm />
       </div>
+      <DepositHistory />
     </div>
   );
 }

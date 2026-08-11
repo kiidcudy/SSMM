@@ -143,3 +143,19 @@ export async function providerStatus(orderId: number | string): Promise<{
 }> {
   return call("status", { order: orderId });
 }
+
+export async function providerRefill(orderId: number | string): Promise<{ refill: string | number }> {
+  return call("refill", { order: orderId });
+}
+
+export async function providerMultiRefill(orderIds: Array<number | string>) {
+  return call("refill", { orders: orderIds.join(",") });
+}
+
+export async function providerRefillStatus(refillId: number | string): Promise<{ status: string }> {
+  return call("refill_status", { refill: refillId });
+}
+
+export async function providerCancel(orderIds: Array<number | string>) {
+  return call("cancel", { orders: orderIds.join(",") });
+}

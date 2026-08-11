@@ -5,7 +5,7 @@ import type { PanelService } from "@/lib/data/catalog";
 import { chargeFor } from "@/lib/data/catalog";
 import { detectPlatform } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { countLines, fieldsForKind, type ExtraField } from "@/lib/provider/service-fields";
+import { countLines, fieldsForService, type ExtraField } from "@/lib/provider/service-fields";
 
 const EXTRA_LABELS: Record<ExtraField, string> = {
   comments: "Comments (one per line)",
@@ -66,7 +66,10 @@ export function NewOrderForm({
   );
   const [serviceId, setServiceId] = useState(filtered[0]?.id ?? 0);
   const service = services.find((s) => s.id === serviceId) ?? filtered[0];
-  const fields = fieldsForKind(service?.type || "default");
+  const fields = fieldsForService({
+    type: service?.type || "default",
+    dripfeed: service?.dripfeed,
+  });
 
   const [link, setLink] = useState("");
   const [quantity, setQuantity] = useState(service?.min ?? 100);

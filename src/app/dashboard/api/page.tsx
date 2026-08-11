@@ -27,10 +27,19 @@ export default async function DashboardApiPage() {
         </p>
         <ul className="mt-3 list-disc space-y-1 pl-5">
           <li>action=services</li>
-          <li>action=add (service, link, quantity)</li>
-          <li>action=status (order)</li>
+          <li>action=add (service, link, quantity + type-specific fields)</li>
+          <li>action=status (order or orders)</li>
           <li>action=balance</li>
+          <li>action=refill (order)</li>
+          <li>action=refill_status (refill)</li>
+          <li>action=cancel (orders)</li>
         </ul>
+        <p className="mt-3">
+          Docs: <a className="text-cyan-300 hover:underline" href="/api-docs">/api-docs</a> · alias{" "}
+          <a className="text-cyan-300 hover:underline" href="/api">
+            /api
+          </a>
+        </p>
       </div>
     </div>
   );

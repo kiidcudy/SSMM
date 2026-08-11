@@ -89,7 +89,17 @@ curl -X POST ${endpoint} \\
 
 curl -X POST ${endpoint} \\
   -d "key=YOUR_API_KEY" \\
-  -d "action=balance"`}</pre>
+  -d "action=balance"
+
+curl -X POST ${endpoint} \\
+  -d "key=YOUR_API_KEY" \\
+  -d "action=refill" \\
+  -d "order=ORDER_ID"
+
+curl -X POST ${endpoint} \\
+  -d "key=YOUR_API_KEY" \\
+  -d "action=cancel" \\
+  -d "orders=ORDER_ID"`}</pre>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">

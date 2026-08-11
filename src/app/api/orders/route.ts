@@ -11,7 +11,7 @@ import {
 } from "@/lib/store/db";
 import { chargeFor } from "@/lib/data/catalog";
 import { isProviderConfigured, providerAdd } from "@/lib/provider/perfectpanel";
-import { countLines, fieldsForKind } from "@/lib/provider/service-fields";
+import { countLines, fieldsForService } from "@/lib/provider/service-fields";
 
 const createSchema = z.object({
   serviceId: z.coerce.number().int().positive(),
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const service = services.find((s) => s.id === body.serviceId);
     if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
 
-    const fields = fieldsForKind(service.type);
+    const fields = fieldsForService(service);
     let quantity = body.quantity ?? service.min;
 
     if (fields.quantityFromComments) {

@@ -16,6 +16,7 @@ export type PanelService = {
   providerServiceId?: number;
   refill?: boolean;
   cancel?: boolean;
+  dripfeed?: boolean;
 };
 
 /** No hard-coded catalog — services come from PROVIDER_API_* (SMMFlare). */

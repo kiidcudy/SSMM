@@ -9,6 +9,7 @@ export function mapProviderService(s: ProviderService): PanelService {
   const bits: string[] = [providerType];
   if (s.refill) bits.push("Refill");
   if (s.cancel) bits.push("Cancel");
+  if (s.dripfeed) bits.push("Drip-feed");
   return {
     id: Number(s.service),
     providerServiceId: Number(s.service),
@@ -22,6 +23,7 @@ export function mapProviderService(s: ProviderService): PanelService {
     description: bits.join(" · "),
     refill: Boolean(s.refill),
     cancel: Boolean(s.cancel),
+    dripfeed: Boolean(s.dripfeed),
   };
 }
 
