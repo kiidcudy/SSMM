@@ -28,6 +28,18 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   hi: "Hindi",
 };
 
+/** Compact codes for mobile / tight UI */
+export const LOCALE_SHORT: Record<Locale, string> = {
+  en: "EN",
+  tr: "TR",
+  "pt-br": "PT",
+  ar: "AR",
+  es: "ES",
+  id: "ID",
+  bn: "BN",
+  hi: "HI",
+};
+
 export const LOCALE_OG: Record<Locale, string> = {
   en: "en_US",
   tr: "tr_TR",

@@ -44,8 +44,14 @@ a {
 }
 
 .container-page {
-  width: min(1120px, calc(100% - 2rem));
+  width: min(1120px, calc(100% - 1.25rem));
   margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .container-page {
+    width: min(1120px, calc(100% - 2rem));
+  }
 }
 
 .btn-primary {

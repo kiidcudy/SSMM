@@ -1,21 +1,13 @@
 import Link from "next/link";
+import type { ComponentProps } from "react";
 import type { Locale } from "@/lib/site";
 import { localePath } from "@/lib/i18n/path";
 
-export function LocaleLink({
-  href,
-  locale,
-  className,
-  children,
-}: {
+type Props = Omit<ComponentProps<typeof Link>, "href"> & {
   href: string;
   locale: Locale;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link href={localePath(href, locale)} className={className}>
-      {children}
-    </Link>
-  );
+};
+
+export function LocaleLink({ href, locale, ...rest }: Props) {
+  return <Link href={localePath(href, locale)} {...rest} />;
 }
