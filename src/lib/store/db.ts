@@ -1,5 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
 import { SEED_SERVICES, type PanelService } from "@/lib/data/catalog";
 
@@ -52,8 +53,16 @@ type DbShape = {
   services: PanelService[];
 };
 
-const DATA_DIR = path.join(process.cwd(), ".data");
-const DB_FILE = path.join(DATA_DIR, "db.json");
+/** Vercel/Lambda: cwd is read-only — use /tmp. Local: project .data */
+function resolvePaths() {
+  const serverless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const dataDir = serverless
+    ? path.join(os.tmpdir(), "ssmmpanel-data")
+    : path.join(process.cwd(), ".data");
+  return { dataDir, dbFile: path.join(dataDir, "db.json") };
+}
+
+let memoryDb: DbShape | null = null;
 
 function hashPassword(password: string, salt?: string): string {
   const s = salt || randomBytes(16).toString("hex");
@@ -128,32 +137,47 @@ async function syncAdminFromEnv(db: DbShape): Promise<DbShape> {
     }
   }
 
+  memoryDb = db;
   if (changed) await save(db);
   return db;
 }
 
+function emptyDb(): DbShape {
+  return {
+    users: [makeAdminUser(new Date().toISOString())],
+    orders: [],
+    funds: [],
+    services: SEED_SERVICES,
+  };
+}
+
 async function ensureDb(): Promise<DbShape> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+  if (memoryDb) return syncAdminFromEnv(memoryDb);
+
+  const { dataDir, dbFile } = resolvePaths();
   try {
-    const raw = await fs.readFile(DB_FILE, "utf8");
+    await fs.mkdir(dataDir, { recursive: true });
+    const raw = await fs.readFile(dbFile, "utf8");
     const db = JSON.parse(raw) as DbShape;
+    memoryDb = db;
     return syncAdminFromEnv(db);
   } catch {
-    const now = new Date().toISOString();
-    const db: DbShape = {
-      users: [makeAdminUser(now)],
-      orders: [],
-      funds: [],
-      services: SEED_SERVICES,
-    };
-    await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+    const db = emptyDb();
+    memoryDb = db;
+    await save(db);
     return db;
   }
 }
 
 async function save(db: DbShape) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+  memoryDb = db;
+  const { dataDir, dbFile } = resolvePaths();
+  try {
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.writeFile(dbFile, JSON.stringify(db, null, 2), "utf8");
+  } catch {
+    // Serverless FS can fail; memory still serves the current instance.
+  }
 }
 
 export async function listUsers() {
