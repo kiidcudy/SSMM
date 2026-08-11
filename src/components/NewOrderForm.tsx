@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PanelService } from "@/lib/data/catalog";
 import { chargeFor } from "@/lib/data/catalog";
+import { detectPlatform } from "@/lib/platforms";
+import { PlatformIcon } from "@/components/PlatformIcon";
 
 export function NewOrderForm({
   services,
@@ -25,7 +27,10 @@ export function NewOrderForm({
     [services],
   );
   const [category, setCategory] = useState(categories[0] || "");
-  const filtered = services.filter((s) => s.category === category);
+  const filtered = useMemo(
+    () => services.filter((s) => s.category === category),
+    [services, category],
+  );
   const [serviceId, setServiceId] = useState(filtered[0]?.id ?? 0);
   const service = services.find((s) => s.id === serviceId) ?? filtered[0];
   const [link, setLink] = useState("");
@@ -33,11 +38,36 @@ export function NewOrderForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const boxRef = useRef<HTMLDivElement>(null);
 
   const charge = service ? chargeFor(service, quantity) : 0;
+  const servicePlatform = detectPlatform(service?.category, service?.name);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return filtered;
+    return filtered.filter(
+      (s) =>
+        String(s.id).includes(q) ||
+        s.name.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q),
+    );
+  }, [filtered, query]);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
 
   function onCategoryChange(next: string) {
     setCategory(next);
+    setOpen(false);
+    setQuery("");
     const first = services.find((s) => s.category === next);
     if (first) {
       setServiceId(first.id);
@@ -47,6 +77,8 @@ export function NewOrderForm({
 
   function onServiceChange(id: number) {
     setServiceId(id);
+    setOpen(false);
+    setQuery("");
     const s = services.find((x) => x.id === id);
     if (s) setQuantity(s.min);
   }
@@ -85,33 +117,96 @@ export function NewOrderForm({
 
       <div>
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.category}</label>
-        <select className="input" value={category} onChange={(e) => onCategoryChange(e.target.value)}>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+            <PlatformIcon platform={detectPlatform(category)} size="sm" />
+          </span>
+          <select
+            className="input pl-10"
+            value={category}
+            onChange={(e) => onCategoryChange(e.target.value)}
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div>
+      <div ref={boxRef}>
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.service}</label>
-        <select
-          className="input"
-          value={service?.id ?? ""}
-          onChange={(e) => onServiceChange(Number(e.target.value))}
+        <button
+          type="button"
+          className="input flex w-full items-center gap-2 text-left"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
         >
-          {filtered.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.id} — {s.name} — ${s.rate}/1K
-            </option>
-          ))}
-        </select>
+          {service ? (
+            <>
+              <PlatformIcon platform={servicePlatform} size="sm" />
+              <span className="min-w-0 flex-1 truncate">
+                {service.id} — {service.name} — ${service.rate}/1K
+              </span>
+            </>
+          ) : (
+            <span className="text-[#93a0b8]">Select service</span>
+          )}
+          <span className="ml-auto text-[#93a0b8]">{open ? "▴" : "▾"}</span>
+        </button>
+
+        {open ? (
+          <div className="relative z-20 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
+            <div className="border-b border-[#243049] p-2">
+              <input
+                className="input"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search service…"
+                autoFocus
+              />
+            </div>
+            <ul className="max-h-72 overflow-y-auto py-1">
+              {visible.length === 0 ? (
+                <li className="px-3 py-4 text-sm text-[#93a0b8]">No services</li>
+              ) : (
+                visible.map((s) => {
+                  const platform = detectPlatform(s.category, s.name);
+                  const active = s.id === service?.id;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => onServiceChange(s.id)}
+                        className={`flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#182236] ${
+                          active ? "bg-cyan-500/10 text-cyan-100" : "text-[#e8eefc]"
+                        }`}
+                      >
+                        <PlatformIcon platform={platform} size="md" className="mt-0.5" />
+                        <span className="min-w-0 flex-1 leading-snug">
+                          <span className="text-cyan-300">{s.id}</span>
+                          {" — "}
+                          {s.name}
+                          {" — "}
+                          <span className="text-[#93a0b8]">${s.rate}/1K</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       {service ? (
         <div className="rounded-lg border border-[#243049] bg-[#121a2b] p-4 text-sm text-[#93a0b8]">
-          <p className="font-semibold text-[#e8eefc]">{labels.description}</p>
+          <div className="flex items-center gap-2">
+            <PlatformIcon platform={servicePlatform} size="md" />
+            <p className="font-semibold text-[#e8eefc]">{labels.description}</p>
+          </div>
           <p className="mt-2">{service.description}</p>
           <p className="mt-2">
             Min {service.min} · Max {service.max} · ${service.rate.toFixed(4)} / 1000

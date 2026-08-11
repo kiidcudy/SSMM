@@ -9,6 +9,8 @@ import { LocaleLink } from "@/components/LocaleLink";
 import { servicesByCategory } from "@/lib/data/catalog";
 import { listServices } from "@/lib/store/db";
 import { getPageChrome } from "@/lib/i18n/pages/chrome";
+import { detectPlatform } from "@/lib/platforms";
+import { PlatformIcon } from "@/components/PlatformIcon";
 
 export async function generateMetadata({
   params,
@@ -76,7 +78,10 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
         ) : (
           Object.entries(grouped).map(([category, rows]) => (
             <div key={category}>
-              <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold">{category}</h2>
+              <h2 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-xl font-semibold">
+                <PlatformIcon platform={detectPlatform(category)} size="md" />
+                {category}
+              </h2>
               <div className="mt-4 overflow-x-auto rounded-2xl border border-[var(--color-border)]">
                 <table className="w-full min-w-[640px] text-left text-sm">
                   <thead className="bg-[#0a1220] text-xs uppercase tracking-wide text-[var(--color-muted)]">
@@ -93,10 +98,15 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
                       <tr key={s.id} className="border-t border-[var(--color-border)]">
                         <td className="px-4 py-3 text-cyan-300">{s.id}</td>
                         <td className="px-4 py-3">
-                          <p className="font-medium">{s.name}</p>
-                          {s.description ? (
-                            <p className="mt-1 text-xs text-[var(--color-muted)]">{s.description}</p>
-                          ) : null}
+                          <div className="flex items-start gap-2">
+                            <PlatformIcon platform={detectPlatform(s.category, s.name)} size="sm" className="mt-0.5" />
+                            <div>
+                              <p className="font-medium">{s.name}</p>
+                              {s.description ? (
+                                <p className="mt-1 text-xs text-[var(--color-muted)]">{s.description}</p>
+                              ) : null}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-3">${s.rate.toFixed(4)}</td>
                         <td className="px-4 py-3">{s.min}</td>
