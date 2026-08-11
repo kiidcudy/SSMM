@@ -10,7 +10,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
       <div className="container-page grid gap-10 py-12 md:grid-cols-4">
         <div>
           <LocaleLink href="/" locale={locale} aria-label={SITE.name}>
-            <Image src="/logo.png" alt={SITE.name} width={152} height={34} className="h-8 w-auto" />
+            <Image src="/logo.png" alt={SITE.name} width={200} height={40} className="h-10 w-auto" />
           </LocaleLink>
           <p className="mt-2 text-sm text-[var(--color-muted)]">{t.footer.tagline}</p>
           <p className="mt-4 text-sm text-[var(--color-muted)]">

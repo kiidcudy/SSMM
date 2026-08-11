@@ -23,9 +23,9 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           <Image
             src="/logo.png"
             alt={SITE.name}
-            width={152}
-            height={34}
-            className="h-8 w-auto"
+            width={200}
+            height={40}
+            className="h-10 w-auto"
             priority
           />
         </LocaleLink>
