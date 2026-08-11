@@ -6,6 +6,7 @@ import { createSessionToken, setSessionCookie } from "@/lib/auth/session";
 const schema = z.object({
   username: z.string().trim().min(1),
   password: z.string().min(1),
+  requireAdmin: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -17,6 +18,9 @@ export async function POST(req: Request) {
     }
     if (user.status !== "active") {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+    }
+    if (body.requireAdmin && user.role !== "admin") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
     await touchAuth(user.id);
     const sessionUser = toSessionUser(user);
