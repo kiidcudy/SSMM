@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/request";
+import { NextResponse, type NextRequest } from "next/server";
 import { LOCALE_COOKIE, SITE, isLocale } from "@/lib/site";
 
 const PUBLIC_FILE = /\.[^/]+$/;
