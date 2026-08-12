@@ -678,10 +678,27 @@ export async function setUserBalance(userId: string, balance: number) {
   });
 }
 
+function applyServiceOverrides(
+  items: PanelService[],
+  overrides: Record<string, ServiceOverride>,
+): PanelService[] {
+  return items.map((s) => {
+    const ov = overrides[String(s.id)];
+    if (!ov) return s;
+    return {
+      ...s,
+      name: ov.name ?? s.name,
+      rate: ov.rate ?? s.rate,
+      description: ov.description ?? s.description,
+    };
+  });
+}
+
 export async function listServices() {
   if (isProviderConfigured()) {
     if (servicesCache && Date.now() - servicesCache.at < SERVICES_TTL_MS) {
-      return servicesCache.items;
+      const overrides = (await ensureDb()).serviceOverrides || {};
+      return applyServiceOverrides(servicesCache.items, overrides);
     }
     try {
       const items = await fetchMappedProviderServices();
@@ -689,12 +706,14 @@ export async function listServices() {
       await modifyDb(async (db) => {
         db.services = items;
       });
-      return items;
+      const overrides = (await ensureDb()).serviceOverrides || {};
+      return applyServiceOverrides(items, overrides);
     } catch {
       // fall back to last stored catalog
     }
   }
-  return (await ensureDb()).services;
+  const db = await ensureDb();
+  return applyServiceOverrides(db.services, db.serviceOverrides || {});
 }
 
 export async function replaceServices(services: PanelService[]) {

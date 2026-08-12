@@ -103,7 +103,9 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
                             <div>
                               <p className="font-medium">{s.name}</p>
                               {s.description ? (
-                                <p className="mt-1 text-xs text-[var(--color-muted)]">{s.description}</p>
+                                <p className="mt-1 max-w-xl whitespace-pre-line text-xs leading-relaxed text-[var(--color-muted)]">
+                                  {s.description}
+                                </p>
                               ) : null}
                             </div>
                           </div>

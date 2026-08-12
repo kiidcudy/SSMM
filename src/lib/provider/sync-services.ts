@@ -1,29 +1,42 @@
 import { providerServices, type ProviderService } from "@/lib/provider/perfectpanel";
 import type { PanelService } from "@/lib/data/catalog";
 import { markupRate, normalizeServiceType } from "@/lib/provider/service-fields";
+import { buildServiceDescription, cleanServiceName } from "@/lib/provider/service-description";
 
 export function mapProviderService(s: ProviderService): PanelService {
   const providerType = s.type || "Default";
   const type = normalizeServiceType(providerType);
   const cost = Number(s.rate) || 0;
-  const bits: string[] = [providerType];
-  if (s.refill) bits.push("Refill");
-  if (s.cancel) bits.push("Cancel");
-  if (s.dripfeed) bits.push("Drip-feed");
+  const name = cleanServiceName(s.name);
+  const min = Number(s.min) || 1;
+  const max = Number(s.max) || 1;
+  const refill = Boolean(s.refill);
+  const cancel = Boolean(s.cancel);
+  const dripfeed = Boolean(s.dripfeed);
+
   return {
     id: Number(s.service),
     providerServiceId: Number(s.service),
-    category: s.category || "Other",
-    name: s.name,
+    category: cleanServiceName(s.category || "Other"),
+    name,
     rate: markupRate(cost),
-    min: Number(s.min) || 1,
-    max: Number(s.max) || 1,
+    min,
+    max,
     type,
     providerType,
-    description: bits.join(" · "),
-    refill: Boolean(s.refill),
-    cancel: Boolean(s.cancel),
-    dripfeed: Boolean(s.dripfeed),
+    description: buildServiceDescription({
+      name,
+      category: s.category || "Other",
+      type: providerType,
+      min,
+      max,
+      refill,
+      cancel,
+      dripfeed,
+    }),
+    refill,
+    cancel,
+    dripfeed,
   };
 }
 

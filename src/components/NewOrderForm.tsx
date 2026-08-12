@@ -401,10 +401,29 @@ export function NewOrderForm({
             <PlatformIcon platform={servicePlatform} size="md" />
             <p className="font-semibold text-[#e8eefc]">{labels.description}</p>
           </div>
-          <p className="mt-2">{service.description}</p>
-          <p className="mt-2">
-            Type: {service.providerType} · Min {service.min} · Max {service.max} · $
-            {service.rate.toFixed(4)} / 1000
+          <div className="mt-3 space-y-1.5 leading-relaxed">
+            {service.description.split(/\r?\n/).map((line, i) => {
+              const text = line.trim();
+              if (!text) return <div key={`sp-${i}`} className="h-1.5" />;
+              return (
+                <p
+                  key={`d-${i}`}
+                  className={
+                    i === 0
+                      ? "font-medium text-[#e8eefc]"
+                      : text.startsWith("⚠")
+                        ? "text-amber-200/90"
+                        : "text-[#93a0b8]"
+                  }
+                >
+                  {text}
+                </p>
+              );
+            })}
+          </div>
+          <p className="mt-3 border-t border-[#243049] pt-2 text-xs text-[#6b778f]">
+            Type: {service.providerType} · Min {service.min.toLocaleString("en-US")} · Max{" "}
+            {service.max.toLocaleString("en-US")} · ${service.rate.toFixed(4)} / 1000
           </p>
         </div>
       ) : null}

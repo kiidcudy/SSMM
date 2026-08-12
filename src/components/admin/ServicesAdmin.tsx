@@ -315,8 +315,8 @@ export function ServicesAdmin({
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            className="w-full rounded border px-3 py-1.5 text-sm"
+            rows={14}
+            className="w-full rounded border px-3 py-1.5 font-mono text-sm leading-relaxed whitespace-pre"
           />
           <button
             type="button"
