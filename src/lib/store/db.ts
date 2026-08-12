@@ -8,8 +8,13 @@ import { fetchMappedProviderServices } from "@/lib/provider/sync-services";
 
 const BLOB_DB_PATH = "ssmm/db.json";
 
+/** First public order id (Perfect Panel style: 3.157.895). */
+export const ORDER_ID_START = 3_157_895;
+
 export type StoredUser = {
   id: string;
+  /** Short numeric id shown in admin (e.g. 904). */
+  uid: number;
   username: string;
   email: string;
   passwordHash: string;
@@ -21,7 +26,20 @@ export type StoredUser = {
   createdAt: string;
   lastAuthAt: string;
   discountPercent: number;
+  customRates?: Record<number, number>;
 };
+
+export type OrderStatus =
+  | "awaiting"
+  | "pending"
+  | "in_progress"
+  | "processing"
+  | "completed"
+  | "partial"
+  | "canceled"
+  | "fail"
+  | "error"
+  | "refunded";
 
 export type StoredOrder = {
   id: string;
@@ -31,12 +49,15 @@ export type StoredOrder = {
   link: string;
   quantity: number;
   charge: number;
-  status: "pending" | "processing" | "completed" | "partial" | "canceled" | "refunded";
+  cost?: number;
+  status: OrderStatus;
   providerOrderId?: string;
   createdAt: string;
   updatedAt: string;
   remains?: number;
   startCount?: number;
+  mode?: "auto" | "manual";
+  cancelReason?: string;
 };
 
 export type FundRequest = {
@@ -46,8 +67,57 @@ export type FundRequest = {
   method: string;
   amount: number;
   note: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "completed" | "expired";
+  mode: "auto" | "manual";
   createdAt: string;
+  updatedAt: string;
+};
+
+export type PanelSettings = {
+  siteName: string;
+  currency: string;
+  supportEmail: string;
+  maintenanceMode: boolean;
+  minDeposit: number;
+  signupBonus: number;
+};
+
+export type AppearanceSettings = {
+  primaryColor: string;
+  logoUrl: string;
+  faviconUrl: string;
+  customCss: string;
+  homepageHtml: string;
+};
+
+export type AffiliateRow = {
+  id: string;
+  userId: string;
+  username: string;
+  code: string;
+  ratePercent: number;
+  earned: number;
+  clicks: number;
+  signups: number;
+  status: "active" | "disabled";
+  createdAt: string;
+};
+
+export type ChildPanel = {
+  id: string;
+  domain: string;
+  ownerUsername: string;
+  status: "active" | "pending" | "suspended";
+  createdAt: string;
+  note: string;
+};
+
+export type ServiceOverride = {
+  enabled?: boolean;
+  hidden?: boolean;
+  rate?: number;
+  name?: string;
+  description?: string;
 };
 
 export type LedgerEntry = {
@@ -71,10 +141,13 @@ export type TicketMessage = {
 
 export type StoredTicket = {
   id: string;
+  uid: number;
   userId: string;
   username: string;
   subject: string;
-  status: "open" | "answered" | "closed";
+  status: "open" | "answered" | "closed" | "pending";
+  assignee: string;
+  unread: boolean;
   messages: TicketMessage[];
   createdAt: string;
   updatedAt: string;
@@ -90,6 +163,13 @@ export type StoredRefill = {
   updatedAt: string;
 };
 
+type DbMeta = {
+  nextOrderId: number;
+  nextUserUid: number;
+  nextPaymentId: number;
+  nextTicketUid: number;
+};
+
 type DbShape = {
   users: StoredUser[];
   orders: StoredOrder[];
@@ -98,7 +178,43 @@ type DbShape = {
   tickets: StoredTicket[];
   ledger: LedgerEntry[];
   refills: StoredRefill[];
+  meta: DbMeta;
+  settings: PanelSettings;
+  appearance: AppearanceSettings;
+  affiliates: AffiliateRow[];
+  childPanels: ChildPanel[];
+  serviceOverrides: Record<string, ServiceOverride>;
 };
+
+function defaultSettings(): PanelSettings {
+  return {
+    siteName: "SSMM Panel",
+    currency: "USD",
+    supportEmail: "support@ssmmpanel.com",
+    maintenanceMode: false,
+    minDeposit: 1,
+    signupBonus: 0,
+  };
+}
+
+function defaultAppearance(): AppearanceSettings {
+  return {
+    primaryColor: "#2563eb",
+    logoUrl: "",
+    faviconUrl: "",
+    customCss: "",
+    homepageHtml: "",
+  };
+}
+
+function defaultMeta(): DbMeta {
+  return {
+    nextOrderId: ORDER_ID_START,
+    nextUserUid: 900,
+    nextPaymentId: 100,
+    nextTicketUid: 500,
+  };
+}
 
 /** Local only: project .data. On Vercel use Vercel Blob (same pattern as other sites). */
 function resolvePaths() {
@@ -164,6 +280,7 @@ function makeAdminUser(now: string): StoredUser {
   const { username, password } = adminCredentials();
   return {
     id: "admin-1",
+    uid: 1,
     username,
     email: "admin@ssmmpanel.com",
     passwordHash: hashPassword(password),
@@ -175,6 +292,7 @@ function makeAdminUser(now: string): StoredUser {
     createdAt: now,
     lastAuthAt: now,
     discountPercent: 0,
+    customRates: {},
   };
 }
 
@@ -219,6 +337,12 @@ function emptyDb(): DbShape {
     tickets: [],
     ledger: [],
     refills: [],
+    meta: defaultMeta(),
+    settings: defaultSettings(),
+    appearance: defaultAppearance(),
+    affiliates: [],
+    childPanels: [],
+    serviceOverrides: {},
   };
 }
 
@@ -230,6 +354,52 @@ function migrateDb(db: DbShape): DbShape {
   if (!Array.isArray(db.orders)) db.orders = [];
   if (!Array.isArray(db.services)) db.services = [];
   if (!Array.isArray(db.users)) db.users = [];
+  if (!Array.isArray(db.affiliates)) db.affiliates = [];
+  if (!Array.isArray(db.childPanels)) db.childPanels = [];
+  if (!db.settings) db.settings = defaultSettings();
+  if (!db.appearance) db.appearance = defaultAppearance();
+  if (!db.serviceOverrides || typeof db.serviceOverrides !== "object") db.serviceOverrides = {};
+  if (!db.meta) db.meta = defaultMeta();
+
+  let uidCursor = db.meta.nextUserUid || 900;
+  for (const u of db.users) {
+    if (typeof u.uid !== "number") {
+      u.uid = u.id === "admin-1" || u.role === "admin" ? 1 : uidCursor++;
+    }
+    if (!u.customRates) u.customRates = {};
+    if (u.discountPercent == null) u.discountPercent = 0;
+  }
+  db.meta.nextUserUid = Math.max(db.meta.nextUserUid || 900, uidCursor);
+
+  let ticketUid = db.meta.nextTicketUid || 500;
+  for (const t of db.tickets) {
+    if (typeof t.uid !== "number") t.uid = ticketUid++;
+    if (t.assignee == null) t.assignee = "";
+    if (t.unread == null) t.unread = t.status === "open" || t.status === "pending";
+  }
+  db.meta.nextTicketUid = Math.max(db.meta.nextTicketUid || 500, ticketUid);
+
+  for (const f of db.funds) {
+    if (!f.mode) f.mode = "manual";
+    if (!f.updatedAt) f.updatedAt = f.createdAt;
+    if (f.status === "approved") f.status = "completed";
+  }
+
+  for (const o of db.orders) {
+    if (!o.mode) o.mode = o.providerOrderId ? "auto" : "manual";
+  }
+
+  const numericOrderIds = db.orders
+    .map((o) => Number(o.id))
+    .filter((n) => Number.isFinite(n) && n >= ORDER_ID_START);
+  const maxOrder = numericOrderIds.length ? Math.max(...numericOrderIds) : ORDER_ID_START - 1;
+  db.meta.nextOrderId = Math.max(db.meta.nextOrderId || ORDER_ID_START, maxOrder + 1);
+
+  const numericPayIds = db.funds.map((f) => Number(f.id)).filter((n) => Number.isFinite(n));
+  if (numericPayIds.length) {
+    db.meta.nextPaymentId = Math.max(db.meta.nextPaymentId || 100, Math.max(...numericPayIds) + 1);
+  }
+
   return db;
 }
 
@@ -355,6 +525,7 @@ export async function createUser(input: {
     const now = new Date().toISOString();
     const user: StoredUser = {
       id: randomBytes(8).toString("hex"),
+      uid: db.meta.nextUserUid++,
       username: input.username.trim(),
       email: input.email.trim().toLowerCase(),
       passwordHash: hashPassword(input.password),
@@ -366,7 +537,18 @@ export async function createUser(input: {
       createdAt: now,
       lastAuthAt: now,
       discountPercent: 0,
+      customRates: {},
     };
+    if (db.settings.signupBonus > 0) {
+      user.balance = db.settings.signupBonus;
+      await pushLedger(db, {
+        userId: user.id,
+        type: "deposit",
+        amount: db.settings.signupBonus,
+        balanceAfter: user.balance,
+        note: "Signup bonus",
+      });
+    }
     db.users.push(user);
     return user;
   });
@@ -458,9 +640,13 @@ export function clearServicesCache() {
 export async function createOrder(order: Omit<StoredOrder, "id" | "createdAt" | "updatedAt">) {
   return modifyDb(async (db) => {
     const now = new Date().toISOString();
+    if (!db.meta.nextOrderId || db.meta.nextOrderId < ORDER_ID_START) {
+      db.meta.nextOrderId = ORDER_ID_START;
+    }
     const row: StoredOrder = {
       ...order,
-      id: randomBytes(6).toString("hex"),
+      id: String(db.meta.nextOrderId++),
+      mode: order.mode || (order.providerOrderId ? "auto" : "manual"),
       createdAt: now,
       updatedAt: now,
     };
@@ -488,13 +674,21 @@ export async function updateOrder(id: string, patch: Partial<StoredOrder>) {
   });
 }
 
-export async function createFundRequest(input: Omit<FundRequest, "id" | "createdAt" | "status">) {
+export async function createFundRequest(
+  input: Omit<FundRequest, "id" | "createdAt" | "updatedAt" | "status" | "mode"> & {
+    status?: FundRequest["status"];
+    mode?: FundRequest["mode"];
+  },
+) {
   return modifyDb(async (db) => {
+    const now = new Date().toISOString();
     const row: FundRequest = {
       ...input,
-      id: randomBytes(6).toString("hex"),
-      status: "pending",
-      createdAt: new Date().toISOString(),
+      id: String(db.meta.nextPaymentId++),
+      status: input.status || "pending",
+      mode: input.mode || "manual",
+      createdAt: now,
+      updatedAt: now,
     };
     db.funds.unshift(row);
     return row;
@@ -509,7 +703,8 @@ export async function approveFund(id: string) {
   return modifyDb(async (db) => {
     const f = db.funds.find((x) => x.id === id);
     if (!f || f.status !== "pending") throw new Error("Invalid fund request");
-    f.status = "approved";
+    f.status = "completed";
+    f.updatedAt = new Date().toISOString();
     const u = db.users.find((x) => x.id === f.userId);
     if (!u) throw new Error("User missing");
     u.balance = Math.round((u.balance + f.amount) * 10000) / 10000;
@@ -530,6 +725,7 @@ export async function rejectFund(id: string) {
     const f = db.funds.find((x) => x.id === id);
     if (!f || f.status !== "pending") throw new Error("Invalid fund request");
     f.status = "rejected";
+    f.updatedAt = new Date().toISOString();
     return f;
   });
 }
@@ -553,10 +749,13 @@ export async function createTicket(input: {
     const now = new Date().toISOString();
     const ticket: StoredTicket = {
       id: randomBytes(6).toString("hex"),
+      uid: db.meta.nextTicketUid++,
       userId: input.userId,
       username: input.username,
       subject: input.subject.trim(),
-      status: "open",
+      status: "pending",
+      assignee: "",
+      unread: true,
       messages: [
         {
           id: randomBytes(4).toString("hex"),
@@ -667,5 +866,231 @@ export function toSessionUser(u: StoredUser) {
     role: u.role,
     balance: u.balance,
     apiKey: u.apiKey,
+  };
+}
+
+export async function getPanelSettings() {
+  return (await ensureDb()).settings;
+}
+
+export async function updatePanelSettings(patch: Partial<PanelSettings>) {
+  return modifyDb(async (db) => {
+    db.settings = { ...db.settings, ...patch };
+    return db.settings;
+  });
+}
+
+export async function getAppearance() {
+  return (await ensureDb()).appearance;
+}
+
+export async function updateAppearance(patch: Partial<AppearanceSettings>) {
+  return modifyDb(async (db) => {
+    db.appearance = { ...db.appearance, ...patch };
+    return db.appearance;
+  });
+}
+
+export async function listAffiliates() {
+  return (await ensureDb()).affiliates;
+}
+
+export async function upsertAffiliate(input: {
+  username: string;
+  code?: string;
+  ratePercent?: number;
+  status?: AffiliateRow["status"];
+}) {
+  return modifyDb(async (db) => {
+    const user = db.users.find((u) => u.username.toLowerCase() === input.username.toLowerCase());
+    if (!user) throw new Error("User not found");
+    const existing = db.affiliates.find((a) => a.userId === user.id);
+    if (existing) {
+      if (input.code) existing.code = input.code;
+      if (input.ratePercent != null) existing.ratePercent = input.ratePercent;
+      if (input.status) existing.status = input.status;
+      return existing;
+    }
+    const row: AffiliateRow = {
+      id: randomBytes(6).toString("hex"),
+      userId: user.id,
+      username: user.username,
+      code: input.code || user.username.toLowerCase(),
+      ratePercent: input.ratePercent ?? 5,
+      earned: 0,
+      clicks: 0,
+      signups: 0,
+      status: input.status || "active",
+      createdAt: new Date().toISOString(),
+    };
+    db.affiliates.unshift(row);
+    return row;
+  });
+}
+
+export async function listChildPanels() {
+  return (await ensureDb()).childPanels;
+}
+
+export async function upsertChildPanel(input: {
+  id?: string;
+  domain: string;
+  ownerUsername: string;
+  status?: ChildPanel["status"];
+  note?: string;
+}) {
+  return modifyDb(async (db) => {
+    if (input.id) {
+      const row = db.childPanels.find((c) => c.id === input.id);
+      if (!row) throw new Error("Child panel not found");
+      row.domain = input.domain.trim();
+      row.ownerUsername = input.ownerUsername.trim();
+      if (input.status) row.status = input.status;
+      if (input.note != null) row.note = input.note;
+      return row;
+    }
+    const row: ChildPanel = {
+      id: randomBytes(6).toString("hex"),
+      domain: input.domain.trim(),
+      ownerUsername: input.ownerUsername.trim(),
+      status: input.status || "pending",
+      createdAt: new Date().toISOString(),
+      note: input.note || "",
+    };
+    db.childPanels.unshift(row);
+    return row;
+  });
+}
+
+export async function deleteChildPanel(id: string) {
+  return modifyDb(async (db) => {
+    db.childPanels = db.childPanels.filter((c) => c.id !== id);
+  });
+}
+
+export async function adminUpdateUser(
+  userId: string,
+  patch: Partial<
+    Pick<StoredUser, "email" | "status" | "discountPercent" | "balance" | "customRates" | "role">
+  > & { password?: string },
+) {
+  return modifyDb(async (db) => {
+    const u = db.users.find((x) => x.id === userId);
+    if (!u) throw new Error("User not found");
+    if (patch.email != null) u.email = patch.email.trim().toLowerCase();
+    if (patch.status) u.status = patch.status;
+    if (patch.discountPercent != null) u.discountPercent = Math.max(0, Math.min(100, patch.discountPercent));
+    if (patch.balance != null) u.balance = Math.round(patch.balance * 10000) / 10000;
+    if (patch.customRates) u.customRates = patch.customRates;
+    if (patch.role && u.id !== "admin-1") u.role = patch.role;
+    if (patch.password) u.passwordHash = hashPassword(patch.password);
+    return u;
+  });
+}
+
+export async function adminAddPayment(input: {
+  username: string;
+  amount: number;
+  method: string;
+  memo: string;
+}) {
+  return modifyDb(async (db) => {
+    const u = db.users.find((x) => x.username.toLowerCase() === input.username.toLowerCase());
+    if (!u) throw new Error("User not found");
+    const amount = Math.round(input.amount * 10000) / 10000;
+    if (!(amount > 0)) throw new Error("Invalid amount");
+    const now = new Date().toISOString();
+    u.balance = Math.round((u.balance + amount) * 10000) / 10000;
+    const row: FundRequest = {
+      id: String(db.meta.nextPaymentId++),
+      userId: u.id,
+      username: u.username,
+      method: input.method || "Bonus",
+      amount,
+      note: input.memo || "",
+      status: "completed",
+      mode: "manual",
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.funds.unshift(row);
+    await pushLedger(db, {
+      userId: u.id,
+      type: "deposit",
+      amount,
+      balanceAfter: u.balance,
+      note: `${row.method}: ${row.note || "Manual payment"}`,
+      refId: row.id,
+    });
+    return row;
+  });
+}
+
+export async function getServiceOverrides() {
+  return (await ensureDb()).serviceOverrides;
+}
+
+export async function setServiceOverride(serviceId: number, patch: ServiceOverride) {
+  return modifyDb(async (db) => {
+    const key = String(serviceId);
+    db.serviceOverrides[key] = { ...db.serviceOverrides[key], ...patch };
+    const svc = db.services.find((s) => s.id === serviceId);
+    if (svc) {
+      if (patch.rate != null) svc.rate = patch.rate;
+      if (patch.name != null) svc.name = patch.name;
+      if (patch.description != null) svc.description = patch.description;
+    }
+    return db.serviceOverrides[key];
+  });
+}
+
+export async function deleteServiceLocal(serviceId: number) {
+  return modifyDb(async (db) => {
+    db.services = db.services.filter((s) => s.id !== serviceId);
+    delete db.serviceOverrides[String(serviceId)];
+  });
+}
+
+export async function duplicateService(serviceId: number) {
+  return modifyDb(async (db) => {
+    const src = db.services.find((s) => s.id === serviceId);
+    if (!src) throw new Error("Service not found");
+    const maxId = db.services.reduce((m, s) => Math.max(m, s.id), 0);
+    const copy: PanelService = {
+      ...src,
+      id: maxId + 1,
+      name: `${src.name} (copy)`,
+    };
+    db.services.push(copy);
+    return copy;
+  });
+}
+
+export async function updateTicketAdmin(
+  id: string,
+  patch: Partial<Pick<StoredTicket, "status" | "assignee" | "unread" | "subject">>,
+) {
+  return modifyDb(async (db) => {
+    const ticket = db.tickets.find((t) => t.id === id);
+    if (!ticket) throw new Error("Ticket not found");
+    Object.assign(ticket, patch, { updatedAt: new Date().toISOString() });
+    return ticket;
+  });
+}
+
+export async function getDbSnapshot() {
+  const db = await ensureDb();
+  return {
+    users: db.users,
+    orders: db.orders,
+    funds: db.funds,
+    services: db.services,
+    tickets: db.tickets,
+    affiliates: db.affiliates,
+    childPanels: db.childPanels,
+    settings: db.settings,
+    appearance: db.appearance,
+    serviceOverrides: db.serviceOverrides,
+    meta: db.meta,
   };
 }

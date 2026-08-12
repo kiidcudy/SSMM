@@ -1,13 +1,26 @@
-import { TicketsPanel } from "@/components/TicketsPanel";
+import { listTickets, listUsers } from "@/lib/store/db";
+import { TicketsAdmin } from "@/components/admin/TicketsAdmin";
 
-export default function AdminTicketsPage() {
+export default async function AdminTicketsPage() {
+  const [tickets, users] = await Promise.all([listTickets(), listUsers()]);
+  const staff = users.filter((u) => u.role === "admin").map((u) => u.username);
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Tickets</h1>
-      <p className="mt-1 text-sm text-gray-500">Reply to user support tickets.</p>
-      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <TicketsPanel isAdmin />
-      </div>
-    </div>
+    <TicketsAdmin
+      staff={staff}
+      tickets={tickets.map((t) => ({
+        id: t.id,
+        uid: t.uid,
+        userId: t.userId,
+        username: t.username,
+        subject: t.subject,
+        status: t.status,
+        assignee: t.assignee || "",
+        unread: Boolean(t.unread),
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+        lastMessage: t.messages[t.messages.length - 1]?.body,
+      }))}
+    />
   );
 }
