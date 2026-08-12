@@ -14,6 +14,8 @@ export const SITE = {
   twitterHandle: "@ssmmpanel",
 } as const;
 
+export const LOCALE_COOKIE = "ssmm_locale";
+
 export const LOCALES = ["en", "tr", "pt-br", "ar", "es", "id", "bn", "hi"] as const;
 export type Locale = (typeof LOCALES)[number];
 
@@ -59,6 +61,64 @@ export function isLocale(value: string): value is Locale {
 
 export function isRtl(locale: Locale): boolean {
   return RTL_LOCALES.includes(locale);
+}
+
+/** Display currency per UI language. Balances / charges are stored in USD. */
+export const LOCALE_CURRENCY: Record<Locale, string> = {
+  en: "USD",
+  tr: "TRY",
+  "pt-br": "BRL",
+  ar: "USD",
+  es: "EUR",
+  id: "IDR",
+  bn: "BDT",
+  hi: "INR",
+};
+
+/** Units of target currency for 1 USD (display conversion). Override via FX_USD_* env. */
+function usdRate(currency: string): number {
+  const envKey = `FX_USD_${currency}`;
+  const fromEnv = Number(process.env[envKey]);
+  if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+  const defaults: Record<string, number> = {
+    USD: 1,
+    TRY: 34.5,
+    EUR: 0.92,
+    BRL: 5.2,
+    IDR: 15800,
+    BDT: 110,
+    INR: 83,
+  };
+  return defaults[currency] ?? 1;
+}
+
+export function currencyForLocale(locale: Locale): string {
+  return LOCALE_CURRENCY[locale] || SITE.currency;
+}
+
+export function convertFromUsd(amountUsd: number, locale: Locale): number {
+  return amountUsd * usdRate(currencyForLocale(locale));
+}
+
+export function convertToUsd(amountLocal: number, locale: Locale): number {
+  const rate = usdRate(currencyForLocale(locale));
+  return rate > 0 ? amountLocal / rate : amountLocal;
+}
+
+export function formatMoney(amountUsd: number, locale: Locale, digits = 4): string {
+  const currency = currencyForLocale(locale);
+  const value = convertFromUsd(amountUsd, locale);
+  const tag = LOCALE_OG[locale].replace("_", "-");
+  try {
+    return new Intl.NumberFormat(tag, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(value);
+  } catch {
+    return `${currency} ${value.toFixed(digits)}`;
+  }
 }
 
 export const PAYMENT_METHODS = [

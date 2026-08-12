@@ -1,9 +1,11 @@
 import { listServices } from "@/lib/store/db";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { readPreferredLocale } from "@/lib/i18n/locale-preference";
 import { MassOrderForm } from "@/components/MassOrderForm";
 
 export default async function MassOrderPage() {
-  const t = getDictionary("en");
+  const locale = await readPreferredLocale();
+  const t = getDictionary(locale);
   const services = await listServices();
   return (
     <div>

@@ -1,10 +1,12 @@
 import { listServices } from "@/lib/store/db";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { readPreferredLocale } from "@/lib/i18n/locale-preference";
 import { NewOrderForm } from "@/components/NewOrderForm";
 
 export default async function NewOrderPage() {
+  const locale = await readPreferredLocale();
   const services = await listServices();
-  const t = getDictionary("en");
+  const t = getDictionary(locale);
 
   return (
     <div className="w-full max-w-5xl">

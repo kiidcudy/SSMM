@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { currencyForLocale, formatMoney, type Locale } from "@/lib/site";
 
 type Fund = {
   id: string;
@@ -20,10 +21,25 @@ type Ledger = {
   createdAt: string;
 };
 
-export function DepositHistory() {
+type Labels = {
+  depositRequests: string;
+  transactionLedger: string;
+  noDeposits: string;
+  noLedger: string;
+  method: string;
+  amount: string;
+  status: string;
+  type: string;
+  id: string;
+  yourBalance: string;
+  note: string;
+};
+
+export function DepositHistory({ locale, labels }: { locale: Locale; labels: Labels }) {
   const [funds, setFunds] = useState<Fund[]>([]);
   const [ledger, setLedger] = useState<Ledger[]>([]);
   const [error, setError] = useState("");
+  const amountHeader = labels.amount.replace("{currency}", currencyForLocale(locale));
 
   useEffect(() => {
     fetch("/api/funds")
@@ -41,22 +57,22 @@ export function DepositHistory() {
   return (
     <div className="mt-10 grid gap-8 lg:grid-cols-2">
       <div>
-        <h2 className="text-lg font-semibold">Deposit requests</h2>
+        <h2 className="text-lg font-semibold">{labels.depositRequests}</h2>
         <div className="mt-3 overflow-x-auto rounded-xl border border-[#243049]">
           <table className="w-full text-left text-sm">
             <thead className="bg-[#111827] text-xs uppercase text-[#93a0b8]">
               <tr>
-                <th className="px-3 py-2">ID</th>
-                <th className="px-3 py-2">Method</th>
-                <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">{labels.id}</th>
+                <th className="px-3 py-2">{labels.method}</th>
+                <th className="px-3 py-2">{amountHeader}</th>
+                <th className="px-3 py-2">{labels.status}</th>
               </tr>
             </thead>
             <tbody>
               {funds.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-3 py-4 text-[#93a0b8]">
-                    No deposit requests yet.
+                    {labels.noDeposits}
                   </td>
                 </tr>
               ) : (
@@ -64,7 +80,7 @@ export function DepositHistory() {
                   <tr key={f.id} className="border-t border-[#243049]">
                     <td className="px-3 py-2 font-mono text-cyan-300">{f.id}</td>
                     <td className="px-3 py-2">{f.method}</td>
-                    <td className="px-3 py-2">${f.amount.toFixed(2)}</td>
+                    <td className="px-3 py-2">{formatMoney(f.amount, locale, 2)}</td>
                     <td className="px-3 py-2 capitalize">{f.status}</td>
                   </tr>
                 ))
@@ -74,22 +90,22 @@ export function DepositHistory() {
         </div>
       </div>
       <div>
-        <h2 className="text-lg font-semibold">Transaction ledger</h2>
+        <h2 className="text-lg font-semibold">{labels.transactionLedger}</h2>
         <div className="mt-3 overflow-x-auto rounded-xl border border-[#243049]">
           <table className="w-full text-left text-sm">
             <thead className="bg-[#111827] text-xs uppercase text-[#93a0b8]">
               <tr>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Balance</th>
-                <th className="px-3 py-2">Note</th>
+                <th className="px-3 py-2">{labels.type}</th>
+                <th className="px-3 py-2">{amountHeader}</th>
+                <th className="px-3 py-2">{labels.yourBalance}</th>
+                <th className="px-3 py-2">{labels.note}</th>
               </tr>
             </thead>
             <tbody>
               {ledger.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-3 py-4 text-[#93a0b8]">
-                    No ledger entries yet.
+                    {labels.noLedger}
                   </td>
                 </tr>
               ) : (
@@ -97,10 +113,10 @@ export function DepositHistory() {
                   <tr key={e.id} className="border-t border-[#243049]">
                     <td className="px-3 py-2 capitalize">{e.type}</td>
                     <td className={`px-3 py-2 ${e.amount >= 0 ? "text-emerald-300" : "text-amber-200"}`}>
-                      {e.amount >= 0 ? "+" : ""}
-                      {e.amount.toFixed(4)}
+                      {e.amount >= 0 ? "+" : "−"}
+                      {formatMoney(Math.abs(e.amount), locale, 4)}
                     </td>
-                    <td className="px-3 py-2">${e.balanceAfter.toFixed(4)}</td>
+                    <td className="px-3 py-2">{formatMoney(e.balanceAfter, locale)}</td>
                     <td className="max-w-[180px] truncate px-3 py-2 text-[#93a0b8]">{e.note}</td>
                   </tr>
                 ))

@@ -24,7 +24,13 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
         aria-label={LOCALE_LABELS[locale]}
         onChange={(e) => {
           const next = e.target.value as Locale;
-          window.location.href = localePath(logical === "/" ? "/" : logical, next);
+          void fetch("/api/locale", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ locale: next }),
+          }).finally(() => {
+            window.location.href = localePath(logical === "/" ? "/" : logical, next);
+          });
         }}
       >
         {LOCALES.map((l) => (
