@@ -4,9 +4,14 @@ export function googleConfigured() {
   return Boolean(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim());
 }
 
-export function googleRedirectUri(origin?: string) {
-  const base = (origin || process.env.NEXT_PUBLIC_SITE_URL || SITE.url).replace(/\/$/, "");
-  return `${base}/api/auth/google/callback`;
+/** Canonical public origin for OAuth (must match Google Console redirect URIs exactly). */
+export function googlePublicOrigin() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || SITE.url || "https://ssmmpanel.com").replace(/\/$/, "");
+}
+
+export function googleRedirectUri(_origin?: string) {
+  // Always use the configured public site URL so www/host variance does not break Google.
+  return `${googlePublicOrigin()}/api/auth/google/callback`;
 }
 
 export function googleAuthUrl(state: string, origin?: string) {
