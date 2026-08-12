@@ -22,6 +22,7 @@ export default async function NewOrderPage() {
             quantity: t.dash.quantity,
             charge: t.dash.charge,
             placeOrder: t.dash.placeOrder,
+            avgDelivery: t.dash.avgDelivery,
           }}
           aside={
             <>

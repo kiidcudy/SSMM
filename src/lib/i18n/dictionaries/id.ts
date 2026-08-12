@@ -63,6 +63,7 @@ export const id: Dictionary = {
     quantity: "Jumlah",
     charge: "Biaya",
     placeOrder: "Buat pesanan",
+    avgDelivery: "Rata-rata pengiriman: {minutes} menit",
     orderWarning:
       "Jangan membuat 2 pesanan untuk layanan yang sama dari tautan yang sama. Pesanan mungkin terlihat selesai meskipun pengiriman belum selesai.",
     orderPublicHint: "Sebelum memesan, pastikan akun atau halaman Anda bersifat publik.",

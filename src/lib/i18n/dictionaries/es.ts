@@ -63,6 +63,7 @@ export const es: Dictionary = {
     quantity: "Cantidad",
     charge: "Cargo",
     placeOrder: "Realizar pedido",
+    avgDelivery: "Entrega media: {minutes} minutos",
     orderWarning:
       "No crees 2 pedidos del mismo servicio con el mismo enlace. El pedido puede aparecer como completado aunque la entrega aún no haya terminado.",
     orderPublicHint: "Antes de pedir, asegúrate de que tu cuenta o página esté en público.",

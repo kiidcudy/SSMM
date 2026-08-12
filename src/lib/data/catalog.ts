@@ -38,3 +38,12 @@ export function chargeFor(service: PanelService, quantity: number): number {
   const qty = Math.max(1, quantity);
   return Math.round(((service.rate * qty) / 1000) * 10000) / 10000;
 }
+
+/** Placeholder avg delivery (8–60 min) until real order history exists. Stable per service id. */
+export function avgDeliveryMinutes(serviceId: number): number {
+  let x = serviceId | 0;
+  x = Math.imul((x >>> 16) ^ x, 0x45d9f3b);
+  x = Math.imul((x >>> 16) ^ x, 0x45d9f3b);
+  x = (x >>> 16) ^ x;
+  return 8 + (Math.abs(x) % 53);
+}

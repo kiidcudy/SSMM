@@ -63,6 +63,7 @@ export const ptBr: Dictionary = {
     quantity: "Quantidade",
     charge: "Cobrança",
     placeOrder: "Fazer pedido",
+    avgDelivery: "Entrega média: {minutes} minutos",
     orderWarning:
       "Não crie 2 pedidos do mesmo serviço com o mesmo link. O pedido pode aparecer como concluído mesmo que a entrega ainda não tenha terminado.",
     orderPublicHint: "Antes de pedir, confirme que sua conta ou página está pública.",

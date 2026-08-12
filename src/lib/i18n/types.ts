@@ -54,6 +54,7 @@ export type Dictionary = {
     quantity: string;
     charge: string;
     placeOrder: string;
+    avgDelivery: string;
     orderWarning: string;
     orderPublicHint: string;
     instantStart: string;

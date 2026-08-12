@@ -63,6 +63,7 @@ export const en: Dictionary = {
     quantity: "Quantity",
     charge: "Charge",
     placeOrder: "Place order",
+    avgDelivery: "Avg. delivery: {minutes} minutes",
     orderWarning:
       "Please do not create 2 orders for the same service from the same link. The order may appear as completed even if delivery is not finished yet.",
     orderPublicHint: "Before placing an order, make sure your account or page is set to public.",

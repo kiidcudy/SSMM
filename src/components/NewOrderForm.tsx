@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PanelService } from "@/lib/data/catalog";
-import { chargeFor } from "@/lib/data/catalog";
+import { avgDeliveryMinutes, chargeFor } from "@/lib/data/catalog";
 import { detectPlatform } from "@/lib/platforms";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { countLines, fieldsForService, type ExtraField } from "@/lib/provider/service-fields";
@@ -52,6 +52,7 @@ export function NewOrderForm({
     quantity: string;
     charge: string;
     placeOrder: string;
+    avgDelivery: string;
   };
   aside?: ReactNode;
 }) {
@@ -418,6 +419,11 @@ export function NewOrderForm({
             placeholder="https://"
             required
           />
+          {service ? (
+            <p className="mt-2 text-sm text-[#93a0b8]">
+              {labels.avgDelivery.replace("{minutes}", String(avgDeliveryMinutes(service.id)))}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

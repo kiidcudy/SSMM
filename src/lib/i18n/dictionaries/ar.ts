@@ -63,6 +63,7 @@ export const ar: Dictionary = {
     quantity: "الكمية",
     charge: "التكلفة",
     placeOrder: "تقديم الطلب",
+    avgDelivery: "متوسط التسليم: {minutes} دقيقة",
     orderWarning:
       "يرجى عدم إنشاء طلبين لنفس الخدمة من نفس الرابط. قد يظهر الطلب كمكتمل حتى لو لم تنتهِ عملية التسليم بعد.",
     orderPublicHint: "قبل الطلب، تأكد أن حسابك أو صفحتك عامة.",

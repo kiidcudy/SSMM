@@ -58,6 +58,7 @@ export const tr: Dictionary = {
     quantity: "Adet",
     charge: "Ücret",
     placeOrder: "Sipariş ver",
+    avgDelivery: "Ort. teslimat: {minutes} dakika",
     orderWarning:
       "Aynı link için aynı servisten 2 sipariş açmayın. Teslimat bitmeden sipariş tamamlandı görünebilir.",
     orderPublicHint: "Sipariş vermeden önce hesabınızın veya sayfanızın herkese açık olduğundan emin olun.",
