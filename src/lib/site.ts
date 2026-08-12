@@ -124,7 +124,6 @@ export function formatMoney(amountUsd: number, locale: Locale, digits = 4): stri
 export const PAYMENT_METHODS = [
   { slug: "paypal", name: "PayPal", seoKeyword: "PayPal SMM Panel" },
   { slug: "credit-card", name: "Visa / Mastercard", seoKeyword: "Credit Card SMM Panel" },
-  { slug: "crypto", name: "Bitcoin & Crypto", seoKeyword: "Crypto SMM Panel" },
   { slug: "skrill", name: "Skrill", seoKeyword: "Skrill SMM Panel" },
   { slug: "revolut", name: "Revolut", seoKeyword: "Revolut SMM Panel" },
   { slug: "payoneer", name: "Payoneer", seoKeyword: "Payoneer SMM Panel" },
@@ -133,5 +132,12 @@ export const PAYMENT_METHODS = [
   { slug: "binance-pay", name: "Binance Pay", seoKeyword: "Binance Pay SMM Panel" },
   { slug: "cryptomus", name: "Cryptomus", seoKeyword: "Cryptomus SMM Panel" },
 ] as const;
+
+/** Binance Pay deposit details (same rails as other panels). */
+export const BINANCE_PAY = {
+  id: process.env.NEXT_PUBLIC_BINANCE_PAY_ID || "67636255",
+  nickname: process.env.NEXT_PUBLIC_BINANCE_PAY_NICKNAME || "Allegre",
+  qr: "/binance-qr.png",
+} as const;
 
 export type PaymentSlug = (typeof PAYMENT_METHODS)[number]["slug"];

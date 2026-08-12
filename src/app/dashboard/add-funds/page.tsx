@@ -1,9 +1,13 @@
+import { redirect } from "next/navigation";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { readPreferredLocale } from "@/lib/i18n/locale-preference";
+import { readSession } from "@/lib/auth/session";
 import { AddFundsForm } from "@/components/AddFundsForm";
 import { DepositHistory } from "@/components/DepositHistory";
 
 export default async function AddFundsPage() {
+  const session = await readSession();
+  if (!session) redirect("/login");
   const locale = await readPreferredLocale();
   const t = getDictionary(locale);
   return (
@@ -13,6 +17,7 @@ export default async function AddFundsPage() {
       <div className="mt-6">
         <AddFundsForm
           locale={locale}
+          username={session.username}
           labels={{
             method: t.dash.method,
             amount: t.dash.amount,
@@ -24,6 +29,19 @@ export default async function AddFundsPage() {
             fundSubmitted: t.dash.fundSubmitted,
             networkError: t.dash.networkError,
             requestFailed: t.dash.requestFailed,
+            binanceTitle: t.dash.binanceTitle,
+            binanceSendExact: t.dash.binanceSendExact,
+            binanceSendToId: t.dash.binanceSendToId,
+            binanceCopy: t.dash.binanceCopy,
+            binanceCopied: t.dash.binanceCopied,
+            binanceNickname: t.dash.binanceNickname,
+            binanceScanQr: t.dash.binanceScanQr,
+            binanceStep1: t.dash.binanceStep1,
+            binanceStep2: t.dash.binanceStep2,
+            binanceNotify: t.dash.binanceNotify,
+            binanceClose: t.dash.binanceClose,
+            binanceRef: t.dash.binanceRef,
+            binanceContinue: t.dash.binanceContinue,
           }}
         />
       </div>
