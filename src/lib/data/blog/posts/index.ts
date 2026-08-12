@@ -1,6 +1,6 @@
 import type { BlogPost } from "../types";
 import { post as p1 } from "./what-is-an-smm-panel";
-import { post as p2 } from "./how-to-choose-cheapest-smm-panel";
+import { post as p2 } from "./how-to-place-your-first-smm-panel-order";
 import { post as p3 } from "./instagram-smm-panel";
 import { post as p4 } from "./paypal-smm-panel";
 import { post as p5 } from "./free-smm-services-vs-paid";

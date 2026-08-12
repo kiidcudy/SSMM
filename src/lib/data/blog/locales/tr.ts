@@ -52,45 +52,63 @@ export const posts: Record<string, BlogPost> = {
       }
     ]
   }),
-  "how-to-choose-the-cheapest-smm-panel": assemblePost(base("how-to-choose-the-cheapest-smm-panel"), {
-    "title": "En Ucuz SMM Panel Nasıl Seçilir? (Tuzağa Düşmeden)",
-    "metaTitle": "En Ucuz SMM Panel Seçim Rehberi 2026 | SSMM",
-    "metaDescription": "En ucuz SMM panel sadece düşük fiyat değildir. Oran, refill, destek ve tamamlanma oranını nasıl karşılaştıracağını öğren.",
-    "focusKeyword": "en ucuz smm panel",
+  "how-to-place-your-first-smm-panel-order": assemblePost(base("how-to-place-your-first-smm-panel-order"), {
+    "title": "SMM Panelde İlk Sipariş Nasıl Verilir?",
+    "metaTitle": "SMM Panel İlk Sipariş Rehberi 2026 | SSMM",
+    "metaDescription": "SSMM Panelde ilk sipariş: hesap aç, ücretsiz paket dene, bakiye yükle, servis seç ve Orders üzerinden takip et.",
+    "focusKeyword": "smm panel sipariş",
     "keywords": [
-      "en ucuz smm panel",
-      "ucuz smm panel",
-      "smm panel karşılaştırma"
+      "smm panel sipariş",
+      "ilk smm siparişi",
+      "ssmm panel kullanım"
     ],
-    "excerpt": "1K fiyatı, refill, destek ve deneme paketine bakmadan para yatırma.",
-    "takeaway": "En ucuz satır işe yaramayan satırdır. SSMM Panel’de ücretsiz dene, oranı ve durumu oku, sonra yükle.",
-    "imageAlt": "En ucuz SMM panel karşılaştırma kontrol listesi kapağı",
-    "imageAlt2": "SMM panel oran ve refill karşılaştırma görseli",
-    "contentHtml": "<p><strong>En ucuz SMM panel</strong> ararken sadece fiyat sıralamasına bakma. Teslim edilmeyen sipariş veya kaybolan destek, ‘ucuz’u pahalıya getirir.</p>\n<p>SSMM Panel’de oranlar şeffaf, ücretsiz paketler test için var, destek kanıt+kullanıcı adıyla yüklemeyi eşler. <a href=\"/free-services\">Ücretsiz servisler</a> ile başla.</p>\n<img src=\"/blog/cheapest-smm-panel-cover.png\" alt=\"En ucuz SMM panel karşılaştırma kontrol listesi kapağı\" />\n<h2>Yüklemeden Önce Kontrol Listesi</h2>\n<p>1K başına fiyat + min/max net mi? Servis notunda refill/partial var mı? Destek WhatsApp/ticket cevap veriyor mu? API dökümanı reseller için hazır mı?</p>\n<p>Küçük ücretsiz veya düşük adetli siparişle hızı ölç. Aynı ID’yi not et.</p>\n<h2>Fiyat Tuzağı</h2>\n<p>Aşırı düşük oran çoğu zaman kalitesiz envanter veya iptal demektir. Ortalama başlama süresi ve kalan adet raporuna bak.</p>\n<p>Ajans fiyatıyla panel fiyatını karıştırma; farklı ürünlerdir.</p>\n<table><thead><tr><th>Ölçüt</th><th>İyi işaret</th><th>Kötü işaret</th></tr></thead><tbody><tr><td>Fiyat</td><td>Net 1K oranı</td><td>Gizli ücret</td></tr><tr><td>Destek</td><td>Kanıt sonrası kredi</td><td>Cevapsız sohbet</td></tr><tr><td>Deneme</td><td>Ücretsiz/küçük paket</td><td>Zorunlu yüksek depozito</td></tr></tbody></table>\n<h2>SSMM Panel’de Nasıl Karar Verirsin?</h2>\n<p>Ücretsiz paket → Orders durumu → beğendiğin satırı ücretli tekrarla. <a href=\"/payments\">Ödeme yöntemleri</a> ve <a href=\"/faq\">SSS</a> yardımcı olur.</p>\n<p>Reseller isen <a href=\"/api-docs\">API</a> ile kendi mağazandan sat; müşteri üst sağlayıcıyı görmez.</p>\n<img src=\"/blog/cheapest-smm-panel-mid.png\" alt=\"SMM panel oran ve refill karşılaştırma görseli\" />\n<h2>Kırmızı Bayraklar</h2>\n<p>Şifre isteyen formlar, ‘anında 100K’ vaatleri, destek kanalı olmayan paneller, sürekli pending kalan siparişler.</p>\n<p>Şüphede ticket aç, kullanıcı adını yaz, büyük yükleme yapma.</p>\n<p><a href=\"/signup\">Hesap aç</a>, bir satırı test et, sonra ölçekle. Instagram için ayrı rehberimiz var.</p>",
+    "excerpt": "Kayıttan ilk tamamlanan siparişe kadar net adımlar — herkese açık link, şifre yok.",
+    "takeaway": "Hesap aç, isteğe bağlı ücretsiz paket dene, küçük bakiye yükle, servis ve linki seç, Orders’ta takip et.",
+    "imageAlt": "SMM panelde ilk sipariş nasıl verilir kapak",
+    "imageAlt2": "SMM panel sipariş adımları görseli",
+    "contentHtml": "<p><strong>İlk SMM panel siparişini</strong> vermeye hazır mısın? <a href=\"/signup\">SSMM Panel</a>’de yol aynı: hesap aç, isteğe bağlı ücretsiz paket dene, bakiye yükle, servis seç, herkese açık link yapıştır ve Orders’ta takip et.</p>
+<p>Yalnızca herkese açık URL gerekir; sosyal medya şifresi istemeyiz.</p>
+<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"SMM panelde ilk sipariş nasıl verilir kapak\" />
+<h2>Adım 1 — Hesap oluştur</h2>
+<p><a href=\"/signup\">Kayıt</a> ol, kullanıcı adı ve e-posta ile panel şifreni belirle. Girişten sonra New Order, Services, Add Funds ve Orders bir arada.</p>
+<p>Terimler için <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">SMM panel nedir</a> yazısına bak.</p>
+<h2>Adım 2 — İsteğe bağlı ücretsiz paket</h2>
+<p><a href=\"/free-services\">Ücretsiz servisler</a> sayfasından küçük bir paket seç, herkese açık link yapıştır. Cooldown kurallarına uy.</p>
+<h2>Adım 3 — Bakiye yükle</h2>
+<p><a href=\"/payments\">Ödemeler</a> sayfasından yöntem seç, notta kullanıcı adını yaz, kanıtı destekle paylaş. Küçük tutarla başla. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">PayPal yükleme rehberi</a>.</p>
+<h2>Adım 4 — Servis seç ve sipariş ver</h2>
+<p><a href=\"/services\">Servisler</a>den platformunu seç; 1K oranı, min/max ve notları oku. New Order’da onayla. Instagram: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">Instagram rehberi</a>.</p>
+<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>
+<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"SMM panel sipariş adımları görseli\" />
+<h2>Adım 5 — Orders’ta takip</h2>
+<p>Pending, processing, completed durumlarını Orders’ta gör. Takılı kalırsa kullanıcı adı + sipariş ID ile destek yaz. <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">Ücretsiz vs ücretli</a>.</p>
+<h2>Onay öncesi kısa kontrol</h2>
+<p>Giriş yapılmış · herkese açık link hazır · min/max uygun · bakiye yeterli · içerik yayında.</p>
+<p><a href=\"/signup\">Ücretsiz hesap aç</a> ve sakin bir ilk sipariş ver.</p>",
     "faq": [
       {
-        "q": "En ucuz her zaman en iyisi mi?",
-        "a": "Hayır. Tamamlanma ve destek olmadan ucuz anlamsızdır."
+        "q": "Instagram/TikTok şifresi gerekir mi?",
+        "a": "Hayır. Yalnızca herkese açık profil veya medya linki."
       },
       {
-        "q": "Nasıl test ederim?",
-        "a": "Ücretsiz paket veya düşük adetle başla."
+        "q": "Yüklemeden sipariş olur mu?",
+        "a": "Ücretsiz paketler için evet. Ücretli satırlar için bakiye gerekir."
       },
       {
-        "q": "Refill nedir?",
-        "a": "Düşüş olursa belirli sürede tamamlanma vaadi — satırda yazmalı."
+        "q": "İlerlemeyi nerede görürüm?",
+        "a": "Dashboard → Orders."
       },
       {
-        "q": "API şart mı?",
-        "a": "Sadece reseller için; bireysel kullanıcı panelden sipariş verir."
+        "q": "Bakiye yetmezse?",
+        "a": "Payments’tan yükle, kredi sonrası New Order’a dön."
       },
       {
-        "q": "Minimum yükleme?",
-        "a": "Küçük tutarlar kabul edilir; yöntem sayfasına bak."
+        "q": "İlk adet ne olmalı?",
+        "a": "Servis minimumuna yakın başla, sonra ölçekle."
       },
       {
-        "q": "Chargeback?",
-        "a": "Önce destekle konuş; aksi halde hesap riski oluşur."
+        "q": "Destek nasıl?",
+        "a": "WhatsApp, Telegram veya ticket — kullanıcı adı + sipariş ID."
       }
     ]
   }),
@@ -165,8 +183,8 @@ export const posts: Record<string, BlogPost> = {
         "a": "Küçük ilk yükleme mümkün."
       },
       {
-        "q": "Chargeback?",
-        "a": "Önce destek; aksi risklidir."
+        "q": "payment disputes?",
+        "a": "Önce destek; aksi önerilmez."
       },
       {
         "q": "Otomatik mi?",
@@ -192,7 +210,7 @@ export const posts: Record<string, BlogPost> = {
     "takeaway": "Ücretsizle hızı gör, aynı satırı ücretli tekrarla. Şifre yok, cooldown’a uy.",
     "imageAlt": "Ücretsiz SMM servisleri vs ücretli karar kapağı",
     "imageAlt2": "Denemeden ölçeğe geçiş görseli",
-    "contentHtml": "<p><strong>Ücretsiz SMM servisleri</strong> panele ilk girişte kör yükleme riskini azaltır. SSMM Panel’de 20 deneme paketi var; cooldown ve herkese açık link kuralı geçerlidir.</p>\n<p>Liste: <a href=\"/free-services\">Free Services</a>. Yükseltme sonrası <a href=\"/payments\">ödeme</a> ve <a href=\"/services\">katalog</a>.</p>\n<img src=\"/blog/free-vs-paid-cover.png\" alt=\"Ücretsiz SMM servisleri vs ücretli karar kapağı\" />\n<h2>Ücretsizde Kal</h2>\n<p>İlk panel deneyimi, link formatı testi, destek hızını ölçmek için.</p>\n<h2>Ücretliye Geç</h2>\n<p>Günlük tutarlı büyüme, müşteri işi, API otomasyonu gerektiğinde.</p>\n<table><thead><tr><th>Durum</th><th>Ücretsiz</th><th>Ücretli</th></tr></thead><tbody><tr><td>Adet</td><td>Küçük</td><td>Yüksek max</td></tr><tr><td>Amaç</td><td>Test</td><td>Ölçek</td></tr><tr><td>API</td><td>Hayır (insan denemesi)</td><td>Evet</td></tr></tbody></table>\n<h2>Karar Tablosu</h2>\n<p>Ücretsiz temiz bittiyse ve aynı metriği büyütmek istiyorsan yükle.</p>\n<p>Takıldıysa ticket aç, büyük para yatırma.</p>\n<img src=\"/blog/free-vs-paid-mid.png\" alt=\"Denemeden ölçeğe geçiş görseli\" />\n<h2>Pratik Yol</h2>\n<p>Ücretsiz paketi al → Orders izle → beğendiğin ID’yi not et → küçük bakiye → tekrar sipariş.</p>\n<p>Bugün bir ücretsiz paketle başla: <a href=\"/free-services\">tüm paketler</a>.</p>",
+    "contentHtml": "<p><strong>Ücretsiz SMM servisleri</strong> panele ilk girişte kör yükleme ihtiyacını azaltır. SSMM Panel’de 20 deneme paketi var; cooldown ve herkese açık link kuralı geçerlidir.</p>\n<p>Liste: <a href=\"/free-services\">Free Services</a>. Yükseltme sonrası <a href=\"/payments\">ödeme</a> ve <a href=\"/services\">katalog</a>.</p>\n<img src=\"/blog/free-vs-paid-cover.png\" alt=\"Ücretsiz SMM servisleri vs ücretli karar kapağı\" />\n<h2>Ücretsizde Kal</h2>\n<p>İlk panel deneyimi, link formatı testi, destek hızını ölçmek için.</p>\n<h2>Ücretliye Geç</h2>\n<p>Günlük tutarlı büyüme, müşteri işi, API otomasyonu gerektiğinde.</p>\n<table><thead><tr><th>Durum</th><th>Ücretsiz</th><th>Ücretli</th></tr></thead><tbody><tr><td>Adet</td><td>Küçük</td><td>Yüksek max</td></tr><tr><td>Amaç</td><td>Test</td><td>Ölçek</td></tr><tr><td>API</td><td>Hayır (insan denemesi)</td><td>Evet</td></tr></tbody></table>\n<h2>Karar Tablosu</h2>\n<p>Ücretsiz temiz bittiyse ve aynı metriği büyütmek istiyorsan yükle.</p>\n<p>Takıldıysa ticket aç, büyük para yatırma.</p>\n<img src=\"/blog/free-vs-paid-mid.png\" alt=\"Denemeden ölçeğe geçiş görseli\" />\n<h2>Pratik Yol</h2>\n<p>Ücretsiz paketi al → Orders izle → beğendiğin ID’yi not et → küçük bakiye → tekrar sipariş.</p>\n<p>Bugün bir ücretsiz paketle başla: <a href=\"/free-services\">tüm paketler</a>.</p>",
     "faq": [
       {
         "q": "Kaç ücretsiz paket var?",

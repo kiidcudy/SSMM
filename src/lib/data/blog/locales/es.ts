@@ -52,45 +52,63 @@ export const posts: Record<string, BlogPost> = {
       }
     ]
   }),
-  "how-to-choose-the-cheapest-smm-panel": assemblePost(base("how-to-choose-the-cheapest-smm-panel"), {
-    "title": "Cómo elegir el panel SMM más barato sin que te engañen",
-    "metaTitle": "Panel SMM más barato — checklist 2026 | SSMM",
-    "metaDescription": "El panel SMM más barato no es solo el precio más bajo. Compara tarifa, refill, soporte y pruebas.",
-    "focusKeyword": "panel smm más barato",
+  "how-to-place-your-first-smm-panel-order": assemblePost(base("how-to-place-your-first-smm-panel-order"), {
+    "title": "Cómo hacer tu primer pedido en un panel SMM",
+    "metaTitle": "Primer pedido en panel SMM 2026 | SSMM",
+    "metaDescription": "Guía paso a paso: cuenta, pack gratis, saldo, servicio y seguimiento en Orders en SSMM Panel.",
+    "focusKeyword": "pedido panel smm",
     "keywords": [
-      "panel smm más barato",
-      "panel smm barato",
-      "comparar panel smm"
+      "pedido panel smm",
+      "primer pedido smm",
+      "tutorial ssmm panel"
     ],
-    "excerpt": "Checklist antes de depositar: tarifa, soporte, prueba gratis.",
-    "takeaway": "Barato sin entrega es caro. Prueba en SSMM Panel y luego escala.",
-    "imageAlt": "Checklist panel SMM más barato portada",
-    "imageAlt2": "Comparar tarifas y refill panel SMM",
-    "contentHtml": "<p>Buscar el <strong>panel SMM más barato</strong> exige mirar más que el número. SSMM ofrece pruebas y soporte con comprobante.</p>\n<img src=\"/blog/cheapest-smm-panel-cover.png\" alt=\"Checklist panel SMM más barato portada\" />\n<h2>Checklist</h2>\n<p>Tarifa/1K clara, refill escrito, soporte real, API si revendes.</p>\n<h2>Trampa del precio</h2>\n<p>Precios absurdos suelen fallar o cancelar.</p>\n<table><thead><tr><th>Criterio</th><th>Bien</th><th>Mal</th></tr></thead><tbody><tr><td>Precio</td><td>Claro</td><td>Oculto</td></tr><tr><td>Soporte</td><td>Crédito tras prueba</td><td>Silencio</td></tr><tr><td>Prueba</td><td>Pack gratis</td><td>Depósito alto obligatorio</td></tr></tbody></table>\n<h2>Decidir en SSMM</h2>\n<p>Pack gratis → Orders → repetir fila de pago.</p>\n<img src=\"/blog/cheapest-smm-panel-mid.png\" alt=\"Comparar tarifas y refill panel SMM\" />\n<h2>Banderas rojas</h2>\n<p>Piden contraseña, promesas mágicas, cero soporte.</p>\n<p><a href=\"/signup\">Regístrate</a> y prueba una fila.</p>",
+    "excerpt": "Del registro al primer pedido completado — solo enlace público.",
+    "takeaway": "Crea cuenta, prueba un pack gratis, añade saldo, elige servicio y enlace, sigue el estado en Orders.",
+    "imageAlt": "Cómo hacer el primer pedido en un panel SMM",
+    "imageAlt2": "Pasos del pedido en panel SMM",
+    "contentHtml": "<p>¿Listo para tu <strong>primer pedido en un panel SMM</strong>? En <a href=\"/signup\">SSMM Panel</a>: cuenta, pack gratis opcional, saldo, servicio, enlace público y seguimiento en Orders.</p>
+<p>Solo URL pública; nunca pedimos contraseña de redes.</p>
+<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"Cómo hacer el primer pedido en un panel SMM\" />
+<h2>Paso 1 — Crear cuenta</h2>
+<p>Ve a <a href=\"/signup\">registro</a>. En el panel verás New Order, Services, Add Funds y Orders.</p>
+<p>Vocabulario: <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">qué es un panel SMM</a>.</p>
+<h2>Paso 2 — Pack gratis opcional</h2>
+<p>En <a href=\"/free-services\">servicios gratis</a> elige un pack pequeño y pega un enlace público. Respeta el cooldown.</p>
+<h2>Paso 3 — Añadir saldo</h2>
+<p>Abre <a href=\"/payments\">pagos</a>, sigue las instrucciones e incluye tu usuario en la nota. Empieza con poco. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">guía PayPal</a>.</p>
+<h2>Paso 4 — Elegir servicio</h2>
+<p>En <a href=\"/services\">servicios</a> lee tarifa/1K, min/max y notas. Confirma en New Order. Instagram: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">guía Instagram</a>.</p>
+<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>
+<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"Pasos del pedido en panel SMM\" />
+<h2>Paso 5 — Seguir en Orders</h2>
+<p>Mira pending/processing/completed. Si se atasca, escribe a soporte con usuario e ID. Más: <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">gratis vs de pago</a>.</p>
+<h2>Checklist antes de confirmar</h2>
+<p>Sesión iniciada · enlace público · min/max OK · saldo suficiente · contenido publicado.</p>
+<p><a href=\"/signup\">Crea tu cuenta</a> y haz un primer pedido tranquilo.</p>",
     "faq": [
       {
-        "q": "¿Lo más barato es mejor?",
-        "a": "No."
+        "q": "¿Contraseña de Instagram?",
+        "a": "No. Solo URL o usuario público."
       },
       {
-        "q": "¿Cómo probar?",
-        "a": "Pack gratis."
+        "q": "¿Pedido sin depósito?",
+        "a": "Sí en packs gratis. Las filas de pago necesitan saldo."
       },
       {
-        "q": "¿Refill?",
-        "a": "Si la fila lo dice."
+        "q": "¿Dónde veo el progreso?",
+        "a": "Orders en el panel."
       },
       {
-        "q": "¿API?",
-        "a": "Para resellers."
+        "q": "¿Saldo bajo?",
+        "a": "Recarga en payments y vuelve a New Order."
       },
       {
-        "q": "¿Mínimo?",
-        "a": "Depósitos pequeños ok."
+        "q": "¿Qué cantidad al inicio?",
+        "a": "Cerca del mínimo del servicio."
       },
       {
-        "q": "¿Chargeback?",
-        "a": "Habla primero con soporte."
+        "q": "¿Soporte?",
+        "a": "WhatsApp, Telegram o ticket con usuario e ID."
       }
     ]
   }),
@@ -164,7 +182,7 @@ export const posts: Record<string, BlogPost> = {
         "a": "Pequeño ok."
       },
       {
-        "q": "¿Chargeback?",
+        "q": "¿payment disputes?",
         "a": "Habla antes."
       },
       {

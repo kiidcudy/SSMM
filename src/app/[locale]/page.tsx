@@ -24,7 +24,7 @@ export async function generateMetadata({
     path: "/",
     keywords: [
       "smm panel",
-      "cheapest smm panel",
+      "affordable smm panel",
       "instagram smm panel",
       "paypal smm panel",
       "tiktok followers panel",

@@ -17,7 +17,7 @@ export const PRIVACY_SECTIONS = [
       "Order data: service ID, public link or username you submit, quantity, charge amount, status history, remains, and timestamps.",
       "Payment data you send voluntarily: method chosen, amount, transaction references, screenshots or proof links, and the username note you include. Card numbers are not stored on our servers when you pay through third-party processors.",
       "Support data: ticket messages, WhatsApp/Telegram correspondence, and attachments you choose to share.",
-      "Technical logs: IP address, browser/user-agent, approximate region, and security events needed to stop abuse (failed logins, rate limits).",
+      "Technical logs: IP address, browser/user-agent, approximate region, and security events needed to protect fair use (failed logins, rate limits).",
     ],
   },
   {
@@ -26,7 +26,7 @@ export const PRIVACY_SECTIONS = [
     body: [
       "Provide and improve the panel: authenticate sessions, show balance, process orders, sync status from upstream providers, and credit verified deposits.",
       "Communicate: send transactional notices about deposits, order issues, or security alerts. Marketing emails are optional and can be declined.",
-      "Prevent abuse: detect free-trial farming, chargeback patterns, duplicate spam orders, and API misuse.",
+      "Prevent misuse: detect free-trial farming, payment disputes patterns, duplicate duplicate orders, and API overuse.",
       "Comply with law: respond to valid legal requests when required.",
     ],
   },
@@ -43,8 +43,8 @@ export const PRIVACY_SECTIONS = [
     id: "retention",
     title: "Retention and security",
     body: [
-      "Account and order records are kept while your account is active and for a reasonable period afterward for disputes, accounting, and fraud prevention.",
-      "You can request account closure by emailing support. Some records may remain where law or chargeback defense requires it.",
+      "Account and order records are kept while your account is active and for a reasonable period afterward for disputes, accounting, and account security.",
+      "You can request account closure by emailing support. Some records may remain where law or payment disputes defense requires it.",
       "We use hashed passwords, HTTPS, access controls on admin tools, and least-privilege practices. No method is perfect — report suspected breaches to support immediately.",
     ],
   },
@@ -95,7 +95,7 @@ export const TERMS_SECTIONS = [
     title: "Accounts and API keys",
     body: [
       "Keep credentials and API keys private. You are responsible for actions taken under your account.",
-      "We may suspend or terminate accounts for abuse: free-trial farming, chargebacks, spam ordering, credential stuffing, or attempts to reverse-engineer provider credentials.",
+      "We may suspend or terminate accounts for fair-use violations: free-trial farming, payment disputes, excessive duplicate ordering, repeated login attempts, or attempts to reverse-engineer provider credentials.",
       "One person/business should not create endless throwaway accounts to bypass fair-use limits on free packs.",
     ],
   },
@@ -114,9 +114,9 @@ export const TERMS_SECTIONS = [
     id: "payments",
     title: "Payments and balance",
     body: [
-      "Deposits are credited after verification of payment proof matched to your username. False proofs are grounds for suspension.",
+      "Deposits are credited after verification of payment proof matched to your username. Incorrect proofs are grounds for suspension.",
       "Balance is non-transferable between users unless we explicitly approve a migration.",
-      "Chargebacks or payment disputes opened without contacting support first may lead to permanent bans and forfeiture of remaining balance.",
+      "payment disputes or payment disputes opened without contacting support first may lead to permanent account closure and forfeiture of remaining balance.",
       "Prices are shown in USD unless stated otherwise. Taxes, if any, are your responsibility in your region.",
     ],
   },
@@ -130,10 +130,10 @@ export const TERMS_SECTIONS = [
     ],
   },
   {
-    id: "prohibited",
-    title: "Prohibited use",
+    id: "not allowed",
+    title: "Restricted use",
     body: [
-      "Illegal content, impersonation of protected brands where prohibited, malware distribution, harassment campaigns, or anything that violates applicable law.",
+      "unlawful content, impersonation of protected brands where not allowed, harmful software distribution, unwanted outreach campaigns, or anything that violates applicable law.",
       "Attempting to access other users’ accounts, admin tools, or provider credentials.",
     ],
   },

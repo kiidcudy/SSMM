@@ -5,7 +5,7 @@ import { SITE } from "@/lib/site";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: `${SITE.name} — Cheapest SMM Panel`,
+    default: `${SITE.name} — Affordable SMM Panel`,
     template: `%s | ${SITE.name}`,
   },
   description: SITE.name,

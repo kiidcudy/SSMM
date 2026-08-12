@@ -17,7 +17,7 @@ const en: PageChrome = {
     "SSMM Panel privacy policy: account data, order links, payment proofs, cookies, retention, and how to contact us. We never ask for social media passwords.",
   termsMetaTitle: "Terms of Service — SSMM Panel Rules for Orders & API",
   termsMetaDesc:
-    "SSMM Panel terms of service covering accounts, orders, deposits, chargebacks, reseller API use, and prohibited activity on ssmmpanel.com.",
+    "SSMM Panel terms of service covering accounts, orders, deposits, payment disputes, reseller API use, and restricted activity on ssmmpanel.com.",
   aboutMetaTitle: "About Us — SSMM Panel for Creators & Resellers",
   aboutMetaDesc:
     "About SSMM Panel: an operator-built SMM desk on ssmmpanel.com with free trials, PayPal/crypto top-ups, transparent rates, and a PerfectPanel-compatible API.",
@@ -67,7 +67,7 @@ const en: PageChrome = {
     "One claim per pack during its cooldown window.",
     "Public profile or media link only — never share your password.",
     "Free packs are for testing delivery. Upgrade to paid services for larger growth.",
-    "Abuse, private accounts, or invalid links may be rejected without retry.",
+    "misuse, private accounts, or invalid links may be rejected without retry.",
     "Create a free account to claim packs and track status in your dashboard.",
   ],
   freePackRules: [
@@ -108,7 +108,7 @@ const tr: PageChrome = {
     "SSMM Panel gizlilik politikası: hesap verileri, sipariş linkleri, ödeme kanıtları, çerezler, saklama ve iletişim. Sosyal medya şifresi asla istemeyiz.",
   termsMetaTitle: "Hizmet Şartları — SSMM Panel Sipariş ve API Kuralları",
   termsMetaDesc:
-    "SSMM Panel hizmet şartları: hesaplar, siparişler, yatırımlar, chargeback’ler, reseller API kullanımı ve ssmmpanel.com’da yasaklı faaliyetler.",
+    "SSMM Panel hizmet şartları: hesaplar, siparişler, yatırımlar, payment disputes’ler, reseller API kullanımı ve ssmmpanel.com’da kısıtlı faaliyetler.",
   aboutMetaTitle: "Hakkımızda — İçerik Üreticileri ve Reseller’lar için SSMM Panel",
   aboutMetaDesc:
     "SSMM Panel hakkında: ssmmpanel.com’da ücretsiz denemeler, PayPal/kripto yükleme, şeffaf fiyatlar ve PerfectPanel uyumlu API sunan operatör masası.",
@@ -155,7 +155,7 @@ const tr: PageChrome = {
     "Her paket için bekleme süresi içinde yalnızca bir talep.",
     "Yalnızca herkese açık profil veya medya linki — şifrenizi asla paylaşmayın.",
     "Ücretsiz paketler teslimatı test içindir. Daha büyük büyüme için ücretli servislere geçin.",
-    "Kötüye kullanım, gizli hesaplar veya geçersiz linkler yeniden deneme olmadan reddedilebilir.",
+    "haksız kullanım, gizli hesaplar veya geçersiz linkler yeniden deneme olmadan reddedilebilir.",
     "Paketleri talep etmek ve durumu takip etmek için ücretsiz hesap oluşturun.",
   ],
   freePackRules: [
@@ -196,7 +196,7 @@ const es: PageChrome = {
     "Política de privacidad de SSMM Panel: datos de cuenta, enlaces de pedidos, comprobantes de pago, cookies, retención y contacto. Nunca pedimos contraseñas de redes sociales.",
   termsMetaTitle: "Términos de servicio — Reglas de pedidos y API de SSMM Panel",
   termsMetaDesc:
-    "Términos de SSMM Panel sobre cuentas, pedidos, depósitos, chargebacks, uso de API de revendedor y actividad prohibida en ssmmpanel.com.",
+    "Términos de SSMM Panel sobre cuentas, pedidos, depósitos, payment disputes, uso de API de revendedor y actividad prohibida en ssmmpanel.com.",
   aboutMetaTitle: "Sobre nosotros — SSMM Panel para creadores y reseellers",
   aboutMetaDesc:
     "Sobre SSMM Panel: escritorio SMM operado en ssmmpanel.com con pruebas gratis, recargas PayPal/crypto, tarifas transparentes y API compatible con PerfectPanel.",
@@ -243,7 +243,7 @@ const es: PageChrome = {
     "Una solicitud por paquete durante su ventana de enfriamiento.",
     "Solo enlace público de perfil o media — nunca compartas tu contraseña.",
     "Los paquetes gratis sirven para probar la entrega. Pasa a servicios de pago para crecer más.",
-    "Abuso, cuentas privadas o enlaces inválidos pueden rechazarse sin reintento.",
+    "uso indebido, cuentas privadas o enlaces inválidos pueden rechazarse sin reintento.",
     "Crea una cuenta gratis para reclamar paquetes y seguir el estado en el panel.",
   ],
   freePackRules: [
@@ -284,7 +284,7 @@ const ptBr: PageChrome = {
     "Política de privacidade do SSMM Panel: dados da conta, links de pedidos, comprovantes, cookies, retenção e contato. Nunca pedimos senhas de redes sociais.",
   termsMetaTitle: "Termos de serviço — Regras de pedidos e API do SSMM Panel",
   termsMetaDesc:
-    "Termos do SSMM Panel sobre contas, pedidos, depósitos, chargebacks, uso da API de revendedor e atividade proibida em ssmmpanel.com.",
+    "Termos do SSMM Panel sobre contas, pedidos, depósitos, payment disputes, uso da API de revendedor e atividade proibida em ssmmpanel.com.",
   aboutMetaTitle: "Sobre nós — SSMM Panel para criadores e revendedores",
   aboutMetaDesc:
     "Sobre o SSMM Panel: mesa SMM operada em ssmmpanel.com com testes grátis, recargas PayPal/crypto, tarifas transparentes e API compatível com PerfectPanel.",
@@ -331,7 +331,7 @@ const ptBr: PageChrome = {
     "Uma solicitação por pacote durante a janela de espera.",
     "Apenas link público de perfil ou mídia — nunca compartilhe sua senha.",
     "Pacotes grátis são para testar a entrega. Use serviços pagos para crescimento maior.",
-    "Abuso, contas privadas ou links inválidos podem ser rejeitados sem nova tentativa.",
+    "uso indebido, contas privadas ou links inválidos podem ser rejeitados sem nova tentativa.",
     "Crie uma conta grátis para resgatar pacotes e acompanhar o status no painel.",
   ],
   freePackRules: [
@@ -460,7 +460,7 @@ const id: PageChrome = {
     "Kebijakan privasi SSMM Panel: data akun, tautan pesanan, bukti pembayaran, cookie, retensi, dan kontak. Kami tidak pernah meminta kata sandi media sosial.",
   termsMetaTitle: "Syarat layanan — Aturan pesanan & API SSMM Panel",
   termsMetaDesc:
-    "Syarat SSMM Panel mencakup akun, pesanan, deposit, chargeback, penggunaan API reseller, dan aktivitas terlarang di ssmmpanel.com.",
+    "Syarat SSMM Panel mencakup akun, pesanan, deposit, payment disputes, penggunaan API reseller, dan aktivitas terbatas di ssmmpanel.com.",
   aboutMetaTitle: "Tentang kami — SSMM Panel untuk kreator & reseller",
   aboutMetaDesc:
     "Tentang SSMM Panel: meja SMM di ssmmpanel.com dengan uji coba gratis, top-up PayPal/kripto, tarif transparan, dan API kompatibel PerfectPanel.",

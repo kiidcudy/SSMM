@@ -18,7 +18,7 @@ const enPrivacy: LegalSection[] = [
       "Order data: service ID, public link or username you submit, quantity, charge amount, status history, remains, and timestamps.",
       "Payment data you send voluntarily: method chosen, amount, transaction references, screenshots or proof links, and the username note you include. Card numbers are not stored on our servers when you pay through third-party processors.",
       "Support data: ticket messages, WhatsApp/Telegram correspondence, and attachments you choose to share.",
-      "Technical logs: IP address, browser/user-agent, approximate region, and security events needed to stop abuse (failed logins, rate limits).",
+      "Technical logs: IP address, browser/user-agent, approximate region, and security events needed to protect fair use (failed logins, rate limits).",
     ],
   },
   {
@@ -27,7 +27,7 @@ const enPrivacy: LegalSection[] = [
     body: [
       "Provide and improve the panel: authenticate sessions, show balance, process orders, sync status from upstream providers, and credit verified deposits.",
       "Communicate: send transactional notices about deposits, order issues, or security alerts. Marketing emails are optional and can be declined.",
-      "Prevent abuse: detect free-trial farming, chargeback patterns, duplicate spam orders, and API misuse.",
+      "Prevent misuse: detect free-trial farming, payment disputes patterns, duplicate duplicate orders, and API overuse.",
       "Comply with law: respond to valid legal requests when required.",
     ],
   },
@@ -44,8 +44,8 @@ const enPrivacy: LegalSection[] = [
     id: "retention",
     title: "Retention and security",
     body: [
-      "Account and order records are kept while your account is active and for a reasonable period afterward for disputes, accounting, and fraud prevention.",
-      "You can request account closure by emailing support. Some records may remain where law or chargeback defense requires it.",
+      "Account and order records are kept while your account is active and for a reasonable period afterward for disputes, accounting, and account security.",
+      "You can request account closure by emailing support. Some records may remain where law or payment disputes defense requires it.",
       "We use hashed passwords, HTTPS, access controls on admin tools, and least-privilege practices. No method is perfect — report suspected breaches to support immediately.",
     ],
   },
@@ -96,7 +96,7 @@ const enTerms: LegalSection[] = [
     title: "Accounts and API keys",
     body: [
       "Keep credentials and API keys private. You are responsible for actions taken under your account.",
-      "We may suspend or terminate accounts for abuse: free-trial farming, chargebacks, spam ordering, credential stuffing, or attempts to reverse-engineer provider credentials.",
+      "We may suspend or terminate accounts for fair-use violations: free-trial farming, payment disputes, excessive duplicate ordering, repeated login attempts, or attempts to reverse-engineer provider credentials.",
       "One person/business should not create endless throwaway accounts to bypass fair-use limits on free packs.",
     ],
   },
@@ -115,9 +115,9 @@ const enTerms: LegalSection[] = [
     id: "payments",
     title: "Payments and balance",
     body: [
-      "Deposits are credited after verification of payment proof matched to your username. False proofs are grounds for suspension.",
+      "Deposits are credited after verification of payment proof matched to your username. Incorrect proofs are grounds for suspension.",
       "Balance is non-transferable between users unless we explicitly approve a migration.",
-      "Chargebacks or payment disputes opened without contacting support first may lead to permanent bans and forfeiture of remaining balance.",
+      "payment disputes or payment disputes opened without contacting support first may lead to permanent account closure and forfeiture of remaining balance.",
       "Prices are shown in USD unless stated otherwise. Taxes, if any, are your responsibility in your region.",
     ],
   },
@@ -131,10 +131,10 @@ const enTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
-    title: "Prohibited use",
+    id: "not allowed",
+    title: "Restricted use",
     body: [
-      "Illegal content, impersonation of protected brands where prohibited, malware distribution, harassment campaigns, or anything that violates applicable law.",
+      "unlawful content, impersonation of protected brands where not allowed, harmful software distribution, unwanted outreach campaigns, or anything that violates applicable law.",
       "Attempting to access other users’ accounts, admin tools, or provider credentials.",
     ],
   },
@@ -221,7 +221,7 @@ const trPrivacy: LegalSection[] = [
       "Sipariş verileri: servis ID, gönderdiğiniz herkese açık link veya kullanıcı adı, adet, ücret tutarı, durum geçmişi, kalan miktar ve zaman damgaları.",
       "Gönüllü gönderdiğiniz ödeme verileri: seçilen yöntem, tutar, işlem referansları, ekran görüntüleri veya kanıt linkleri ve eklediğiniz kullanıcı adı notu. Üçüncü taraf işlemciler üzerinden ödeme yaptığınızda kart numaraları sunucularımızda saklanmaz.",
       "Destek verileri: ticket mesajları, WhatsApp/Telegram yazışmaları ve paylaşmayı seçtiğiniz ekler.",
-      "Teknik günlükler: IP adresi, tarayıcı/user-agent, yaklaşık bölge ve kötüye kullanımı durdurmak için gereken güvenlik olayları (başarısız girişler, hız sınırları).",
+      "Teknik günlükler: IP adresi, tarayıcı/user-agent, yaklaşık bölge ve haksız kullanımı önlemek için gereken güvenlik olayları (başarısız girişler, hız sınırları).",
     ],
   },
   {
@@ -230,7 +230,7 @@ const trPrivacy: LegalSection[] = [
     body: [
       "Paneli sağlamak ve iyileştirmek: oturum doğrulama, bakiye gösterme, sipariş işleme, üst sağlayıcılardan durum senkronu ve doğrulanmış yatırımları kredileme.",
       "İletişim: yatırımlar, sipariş sorunları veya güvenlik uyarıları hakkında işlemsel bildirimler. Pazarlama e-postaları isteğe bağlıdır ve reddedilebilir.",
-      "Kötüye kullanımı önlemek: ücretsiz deneme tarımı, chargeback kalıpları, yinelenen spam siparişler ve API kötüye kullanımını tespit etmek.",
+      "Haksız kullanımı önlemek: ücretsiz deneme tarımı, ödeme uyuşmazlığı kalıpları, yinelenen gereksiz siparişler ve API aşırı kullanımını tespit etmek.",
       "Yasaya uymak: gerektiğinde geçerli yasal taleplere yanıt vermek.",
     ],
   },
@@ -247,9 +247,9 @@ const trPrivacy: LegalSection[] = [
     id: "retention",
     title: "Saklama ve güvenlik",
     body: [
-      "Hesap ve sipariş kayıtları hesabınız aktifken ve sonrasında makul bir süre uyuşmazlık, muhasebe ve dolandırıcılık önleme için tutulur.",
-      "Destek e-postası ile hesap kapatma talep edebilirsiniz. Yasa veya chargeback savunması gerektirdiğinde bazı kayıtlar kalabilir.",
-      "Hash’lenmiş şifreler, HTTPS, admin araçlarında erişim kontrolleri ve en az ayrıcalık uygulamalarını kullanırız. Hiçbir yöntem kusursuz değildir — şüpheli ihlalleri hemen desteğe bildirin.",
+      "Hesap ve sipariş kayıtları hesabınız aktifken ve sonrasında makul bir süre uyuşmazlık, muhasebe ve hesap güvenliği için tutulur.",
+      "Destek e-postası ile hesap kapatma talep edebilirsiniz. Yasa veya payment disputes savunması gerektirdiğinde bazı kayıtlar kalabilir.",
+      "Hash’lenmiş şifreler, HTTPS, admin araçlarında erişim kontrolleri ve en az ayrıcalık uygulamalarını kullanırız. Hiçbir yöntem kusursuz değildir — belirsiz ihlalleri hemen desteğe bildirin.",
     ],
   },
   {
@@ -299,7 +299,7 @@ const trTerms: LegalSection[] = [
     title: "Hesaplar ve API anahtarları",
     body: [
       "Kimlik bilgilerini ve API anahtarlarını gizli tutun. Hesabınız altında yapılan işlemlerden siz sorumlusunuz.",
-      "Kötüye kullanım nedeniyle hesapları askıya alabilir veya sonlandırabiliriz: ücretsiz deneme tarımı, chargeback, spam sipariş, kimlik bilgisi doldurma veya sağlayıcı kimlik bilgilerini tersine mühendislik girişimleri.",
+      "haksız kullanım nedeniyle hesapları askıya alabilir veya sonlandırabiliriz: ücretsiz deneme tarımı, payment disputes, unwanted bulk sipariş, kimlik bilgisi doldurma veya sağlayıcı kimlik bilgilerini tersine mühendislik girişimleri.",
       "Bir kişi/işletme, ücretsiz paketlerdeki adil kullanım limitlerini aşmak için sonsuz atılabilir hesap oluşturmamalıdır.",
     ],
   },
@@ -318,9 +318,9 @@ const trTerms: LegalSection[] = [
     id: "payments",
     title: "Ödemeler ve bakiye",
     body: [
-      "Yatırımlar, kullanıcı adınıza eşleşen ödeme kanıtı doğrulandıktan sonra kredilenir. Sahte kanıt askıya alma gerekçesidir.",
+      "Yatırımlar, kullanıcı adınıza eşleşen ödeme kanıtı doğrulandıktan sonra kredilenir. Hatalı kanıt askıya alma gerekçesidir.",
       "Bakiye, açıkça onayladığımız bir taşıma dışında kullanıcılar arasında devredilemez.",
-      "Önce destekle iletişime geçmeden açılan chargeback veya ödeme uyuşmazlıkları kalıcı yasak ve kalan bakiyenin kaybına yol açabilir.",
+      "Önce destekle iletişime geçmeden açılan payment disputes veya ödeme uyuşmazlıkları kalıcı kısıtlama ve kalan bakiyenin kaybına yol açabilir.",
       "Fiyatlar aksi belirtilmedikçe USD cinsindendir. Varsa vergiler bölgenizde sizin sorumluluğunuzdadır.",
     ],
   },
@@ -334,8 +334,8 @@ const trTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
-    title: "Yasak kullanım",
+    id: "not allowed",
+    title: "kısıtlama kullanım",
     body: [
       "Yasadışı içerik, yasaklandığı yerde korunan markaları taklit, zararlı yazılım dağıtımı, taciz kampanyaları veya geçerli yasayı ihlal eden her şey.",
       "Diğer kullanıcıların hesaplarına, admin araçlarına veya sağlayıcı kimlik bilgilerine erişmeye çalışmak.",
@@ -424,7 +424,7 @@ const esPrivacy: LegalSection[] = [
       "Datos de pedido: ID de servicio, enlace público o usuario que envías, cantidad, cargo, historial de estado, restante y marcas de tiempo.",
       "Datos de pago que envías voluntariamente: método, importe, referencias de transacción, capturas o enlaces de prueba y la nota con tu usuario. Los números de tarjeta no se almacenan en nuestros servidores cuando pagas con procesadores de terceros.",
       "Datos de soporte: mensajes de ticket, correspondencia de WhatsApp/Telegram y adjuntos que elijas compartir.",
-      "Registros técnicos: IP, navegador/user-agent, región aproximada y eventos de seguridad para frenar abuso (accesos fallidos, límites de tasa).",
+      "Registros técnicos: IP, navegador/user-agent, región aproximada y eventos de seguridad para frenar uso indebido (accesos fallidos, límites de tasa).",
     ],
   },
   {
@@ -433,7 +433,7 @@ const esPrivacy: LegalSection[] = [
     body: [
       "Prestar y mejorar el panel: autenticar sesiones, mostrar saldo, procesar pedidos, sincronizar estado con proveedores y acreditar depósitos verificados.",
       "Comunicar: avisos transaccionales sobre depósitos, problemas de pedido o alertas de seguridad. El marketing por correo es opcional y puede rechazarse.",
-      "Prevenir abuso: detectar abuso de pruebas gratis, patrones de chargeback, pedidos spam duplicados y mal uso de la API.",
+      "Prevenir uso indebido: detectar uso indebido de pruebas gratis, patrones de payment disputes, pedidos unwanted bulk duplicados y uso indebido de la API.",
       "Cumplir la ley: responder a solicitudes legales válidas cuando sea necesario.",
     ],
   },
@@ -450,8 +450,8 @@ const esPrivacy: LegalSection[] = [
     id: "retention",
     title: "Retención y seguridad",
     body: [
-      "Los registros de cuenta y pedidos se conservan mientras la cuenta esté activa y un periodo razonable después por disputas, contabilidad y prevención de fraude.",
-      "Puedes solicitar el cierre de cuenta por correo a soporte. Algunos registros pueden permanecer si la ley o la defensa ante chargebacks lo exigen.",
+      "Los registros de cuenta y pedidos se conservan mientras la cuenta esté activa y un periodo razonable después por disputas, contabilidad y seguridad de cuenta.",
+      "Puedes solicitar el cierre de cuenta por correo a soporte. Algunos registros pueden permanecer si la ley o la defensa ante payment disputes lo exigen.",
       "Usamos contraseñas hasheadas, HTTPS, controles de acceso en herramientas de admin y privilegio mínimo. Ningún método es perfecto — informa de inmediato sospechas de filtración.",
     ],
   },
@@ -502,7 +502,7 @@ const esTerms: LegalSection[] = [
     title: "Cuentas y claves API",
     body: [
       "Mantén privadas las credenciales y claves API. Eres responsable de las acciones bajo tu cuenta.",
-      "Podemos suspender o cerrar cuentas por abuso: abuso de pruebas gratis, chargebacks, pedidos spam, credential stuffing o intentos de ingeniería inversa de credenciales de proveedor.",
+      "Podemos suspender o cerrar cuentas por uso indebido: uso indebido de pruebas gratis, payment disputes, pedidos unwanted bulk, repeated login attempts o intentos de ingeniería inversa de credenciales de proveedor.",
       "Una persona/negocio no debe crear cuentas desechables sin fin para eludir límites de uso justo de paquetes gratis.",
     ],
   },
@@ -523,7 +523,7 @@ const esTerms: LegalSection[] = [
     body: [
       "Los depósitos se acreditan tras verificar la prueba de pago emparejada con tu usuario. Pruebas falsas justifican suspensión.",
       "El saldo no es transferible entre usuarios salvo que aprobemos expresamente una migración.",
-      "Chargebacks o disputas de pago abiertas sin contactar soporte primero pueden implicar ban permanente y pérdida del saldo restante.",
+      "payment disputes o disputas de pago abiertas sin contactar soporte primero pueden implicar cierre permanente de cuenta y pérdida del saldo restante.",
       "Los precios se muestran en USD salvo indicación contraria. Los impuestos, si los hay, son tu responsabilidad en tu región.",
     ],
   },
@@ -537,10 +537,10 @@ const esTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
+    id: "not allowed",
     title: "Uso prohibido",
     body: [
-      "Contenido ilegal, suplantación de marcas protegidas donde esté prohibido, distribución de malware, campañas de acoso o cualquier cosa que viole la ley aplicable.",
+      "Contenido ilegal, suplantación de marcas protegidas donde esté prohibido, distribución de unwanted software, campañas de acoso o cualquier cosa que viole la ley aplicable.",
       "Intentar acceder a cuentas de otros usuarios, herramientas de admin o credenciales de proveedor.",
     ],
   },
@@ -627,7 +627,7 @@ const ptBrPrivacy: LegalSection[] = [
       "Dados do pedido: ID do serviço, link público ou usuário enviado, quantidade, valor cobrado, histórico de status, restante e carimbos de tempo.",
       "Dados de pagamento que você envia voluntariamente: método, valor, referências de transação, capturas ou links de comprovante e a nota com seu usuário. Números de cartão não são armazenados em nossos servidores quando você paga por processadores de terceiros.",
       "Dados de suporte: mensagens de ticket, correspondência WhatsApp/Telegram e anexos que você optar por compartilhar.",
-      "Logs técnicos: IP, navegador/user-agent, região aproximada e eventos de segurança para conter abuso (logins falhos, limites de taxa).",
+      "Logs técnicos: IP, navegador/user-agent, região aproximada e eventos de segurança para conter uso indebido (logins falhos, limites de taxa).",
     ],
   },
   {
@@ -636,7 +636,7 @@ const ptBrPrivacy: LegalSection[] = [
     body: [
       "Prestar e melhorar o painel: autenticar sessões, mostrar saldo, processar pedidos, sincronizar status com fornecedores e creditar depósitos verificados.",
       "Comunicar: avisos transacionais sobre depósitos, problemas de pedido ou alertas de segurança. E-mails de marketing são opcionais e podem ser recusados.",
-      "Prevenir abuso: detectar abuso de testes grátis, padrões de chargeback, pedidos spam duplicados e mau uso da API.",
+      "Prevenir uso indebido: detectar uso indebido de testes grátis, padrões de payment disputes, pedidos unwanted bulk duplicados e mau uso da API.",
       "Cumprir a lei: responder a solicitações legais válidas quando necessário.",
     ],
   },
@@ -653,8 +653,8 @@ const ptBrPrivacy: LegalSection[] = [
     id: "retention",
     title: "Retenção e segurança",
     body: [
-      "Registros de conta e pedidos são mantidos enquanto a conta estiver ativa e por um período razoável depois, para disputas, contabilidade e prevenção de fraude.",
-      "Você pode solicitar o encerramento da conta por e-mail ao suporte. Alguns registros podem permanecer quando a lei ou a defesa de chargeback exigirem.",
+      "Registros de conta e pedidos são mantidos enquanto a conta estiver ativa e por um período razoável depois, para disputas, contabilidade e prevenção de actividad no autorizada.",
+      "Você pode solicitar o encerramento da conta por e-mail ao suporte. Alguns registros podem permanecer quando a lei ou a defesa de payment disputes exigirem.",
       "Usamos senhas com hash, HTTPS, controles de acesso em ferramentas admin e privilégio mínimo. Nenhum método é perfeito — reporte suspeitas de violação imediatamente.",
     ],
   },
@@ -705,7 +705,7 @@ const ptBrTerms: LegalSection[] = [
     title: "Contas e chaves de API",
     body: [
       "Mantenha credenciais e chaves de API privadas. Você é responsável pelas ações na sua conta.",
-      "Podemos suspender ou encerrar contas por abuso: abuso de testes grátis, chargebacks, pedidos spam, credential stuffing ou tentativas de engenharia reversa de credenciais de fornecedor.",
+      "Podemos suspender ou encerrar contas por uso indebido: uso indebido de testes grátis, payment disputes, pedidos unwanted bulk, repeated login attempts ou tentativas de engenharia reversa de credenciais de fornecedor.",
       "Uma pessoa/empresa não deve criar contas descartáveis sem fim para contornar limites de uso justo dos pacotes grátis.",
     ],
   },
@@ -726,7 +726,7 @@ const ptBrTerms: LegalSection[] = [
     body: [
       "Depósitos são creditados após verificação do comprovante correspondente ao seu usuário. Comprovantes falsos justificam suspensão.",
       "O saldo é intransferível entre usuários, salvo se aprovarmos explicitamente uma migração.",
-      "Chargebacks ou disputas de pagamento abertas sem contactar o suporte primeiro podem gerar banimento permanente e perda do saldo restante.",
+      "payment disputes ou disputas de pagamento abertas sem contactar o suporte primeiro podem gerar banimento permanente e perda do saldo restante.",
       "Preços são mostrados em USD salvo indicação em contrário. Impostos, se houver, são sua responsabilidade na sua região.",
     ],
   },
@@ -740,10 +740,10 @@ const ptBrTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
+    id: "not allowed",
     title: "Uso proibido",
     body: [
-      "Conteúdo ilegal, personificação de marcas protegidas onde for proibido, distribuição de malware, campanhas de assédio ou qualquer coisa que viole a lei aplicável.",
+      "Conteúdo ilegal, personificação de marcas protegidas onde for proibido, distribuição de unwanted software, campanhas de assédio ou qualquer coisa que viole a lei aplicável.",
       "Tentar acessar contas de outros usuários, ferramentas admin ou credenciais de fornecedor.",
     ],
   },
@@ -943,7 +943,7 @@ const arTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
+    id: "not allowed",
     title: "الاستخدام المحظور",
     body: [
       "محتوى غير قانوني أو انتحال علامات محمية حيث يُحظر أو توزيع برمجيات خبيثة أو حملات مضايقة أو أي شيء يخالف القانون المعمول به.",
@@ -1042,7 +1042,7 @@ const idPrivacy: LegalSection[] = [
     body: [
       "Menyediakan dan meningkatkan panel: mengautentikasi sesi, menampilkan saldo, memproses pesanan, menyinkronkan status dari penyedia hulu, dan mengkredit deposit terverifikasi.",
       "Berkomunikasi: mengirim pemberitahuan transaksional tentang deposit, masalah pesanan, atau peringatan keamanan. Email pemasaran bersifat opsional dan dapat ditolak.",
-      "Mencegah penyalahgunaan: mendeteksi farming uji coba gratis, pola chargeback, pesanan spam duplikat, dan penyalahgunaan API.",
+      "Mencegah penyalahgunaan: mendeteksi farming uji coba gratis, pola payment disputes, pesanan unwanted bulk duplikat, dan penyalahgunaan API.",
       "Mematuhi hukum: menanggapi permintaan hukum yang sah bila diperlukan.",
     ],
   },
@@ -1060,7 +1060,7 @@ const idPrivacy: LegalSection[] = [
     title: "Retensi dan keamanan",
     body: [
       "Catatan akun dan pesanan disimpan selama akun aktif dan untuk periode wajar setelahnya demi sengketa, akuntansi, dan pencegahan penipuan.",
-      "Anda dapat meminta penutupan akun dengan mengirim email ke dukungan. Beberapa catatan dapat tetap ada bila hukum atau pertahanan chargeback mengharuskannya.",
+      "Anda dapat meminta penutupan akun dengan mengirim email ke dukungan. Beberapa catatan dapat tetap ada bila hukum atau pertahanan payment disputes mengharuskannya.",
       "Kami memakai kata sandi ter-hash, HTTPS, kontrol akses pada alat admin, dan praktik hak istimewa minimal. Tidak ada metode yang sempurna — laporkan dugaan pelanggaran segera.",
     ],
   },
@@ -1111,7 +1111,7 @@ const idTerms: LegalSection[] = [
     title: "Akun dan kunci API",
     body: [
       "Jaga kredensial dan kunci API tetap rahasia. Anda bertanggung jawab atas tindakan di bawah akun Anda.",
-      "Kami dapat menangguhkan atau menghentikan akun karena penyalahgunaan: farming uji coba gratis, chargeback, pesanan spam, credential stuffing, atau upaya merekayasa balik kredensial penyedia.",
+      "Kami dapat menangguhkan atau menghentikan akun karena penyalahgunaan: farming uji coba gratis, payment disputes, pesanan unwanted bulk, repeated login attempts, atau upaya merekayasa balik kredensial penyedia.",
       "Satu orang/bisnis tidak boleh membuat akun buangan tanpa henti untuk melewati batas penggunaan wajar paket gratis.",
     ],
   },
@@ -1132,7 +1132,7 @@ const idTerms: LegalSection[] = [
     body: [
       "Deposit dikreditkan setelah verifikasi bukti pembayaran yang cocok dengan username Anda. Bukti palsu menjadi alasan penangguhan.",
       "Saldo tidak dapat dipindahkan antar pengguna kecuali kami secara eksplisit menyetujui migrasi.",
-      "Chargeback atau sengketa pembayaran yang dibuka tanpa menghubungi dukungan terlebih dahulu dapat menyebabkan ban permanen dan hilangnya sisa saldo.",
+      "payment disputes atau sengketa pembayaran yang dibuka tanpa menghubungi dukungan terlebih dahulu dapat menyebabkan ban permanen dan hilangnya sisa saldo.",
       "Harga ditampilkan dalam USD kecuali dinyatakan lain. Pajak, jika ada, menjadi tanggung jawab Anda di wilayah Anda.",
     ],
   },
@@ -1146,10 +1146,10 @@ const idTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
-    title: "Penggunaan terlarang",
+    id: "not allowed",
+    title: "Penggunaan terbatas",
     body: [
-      "Konten ilegal, peniruan merek terlindungi di mana dilarang, distribusi malware, kampanye pelecehan, atau apa pun yang melanggar hukum yang berlaku.",
+      "Konten ilegal, peniruan merek terlindungi di mana dilarang, distribusi unwanted software, kampanye pelecehan, atau apa pun yang melanggar hukum yang berlaku.",
       "Mencoba mengakses akun pengguna lain, alat admin, atau kredensial penyedia.",
     ],
   },
@@ -1349,7 +1349,7 @@ const bnTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
+    id: "not allowed",
     title: "নিষিদ্ধ ব্যবহার",
     body: [
       "অবৈধ কন্টেন্ট, নিষিদ্ধ স্থানে সুরক্ষিত ব্র্যান্ডের ছদ্মবেশ, ম্যালওয়্যার বিতরণ, হয়রানি অভিযান বা প্রযোজ্য আইন লঙ্ঘন করে এমন কিছু।",
@@ -1552,7 +1552,7 @@ const hiTerms: LegalSection[] = [
     ],
   },
   {
-    id: "prohibited",
+    id: "not allowed",
     title: "निषिद्ध उपयोग",
     body: [
       "अवैध सामग्री, जहाँ निषिद्ध हो संरक्षित ब्रांड का प्रतिरूपण, मैलवेयर वितरण, उत्पीड़न अभियान या लागू कानून का उल्लंघन करने वाली कोई भी चीज़।",

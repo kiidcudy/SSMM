@@ -51,45 +51,63 @@ export const posts: Record<string, BlogPost> = {
       }
     ]
   }),
-  "how-to-choose-the-cheapest-smm-panel": assemblePost(base("how-to-choose-the-cheapest-smm-panel"), {
-    "title": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন",
-    "metaTitle": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাব | SSMM",
-    "metaDescription": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন Checklist for rates, refill and support.",
-    "focusKeyword": "সস্তা smm প্যানেল",
+  "how-to-place-your-first-smm-panel-order": assemblePost(base("how-to-place-your-first-smm-panel-order"), {
+    "title": "SMM প্যানেলে প্রথম অর্ডার কীভাবে দেবেন",
+    "metaTitle": "SMM প্যানেল প্রথম অর্ডার গাইড ২০২৬ | SSMM",
+    "metaDescription": "ধাপে ধাপে: অ্যাকাউন্ট, ফ্রি প্যাক, ব্যালেন্স, সার্ভিস এবং Orders-এ ট্র্যাক — SSMM Panel.",
+    "focusKeyword": "smm প্যানেল অর্ডার",
     "keywords": [
-      "সস্তা smm প্যানেল",
-      "ssmm panel",
-      "smm panel"
+      "smm প্যানেল অর্ডার",
+      "প্রথম smm অর্ডার",
+      "ssmm টিউটোরিয়াল"
     ],
-    "excerpt": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন",
-    "takeaway": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন — start with a free pack on SSMM Panel, public URL only, then scale paid lines.",
-    "imageAlt": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন cover",
-    "imageAlt2": "প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন mid image",
-    "contentHtml": "<p><strong>সস্তা SMM প্যানেল</strong> মানে শুধু দাম নয় — ডেলিভারি ও সাপোর্ট দেখুন।</p>\n<img src=\"/blog/cheapest-smm-panel-cover.png\" alt=\"প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন cover\" />\n<h2>Overview</h2>\n<p>Learn the core idea behind সস্তা smm প্যানেল and how SSMM Panel fits a real workflow.</p>\n<p>Orders use public URLs only.</p>\n<h2>How it works</h2>\n<p>Sign up, optional free pack, deposit with username + proof, order from the dashboard.</p>\n<p>Track status in Orders; resellers can use <a href=\"/api-docs\">API docs</a>.</p>\n<table><thead><tr><th>Item</th><th>Action</th><th>Note</th></tr></thead><tbody><tr><td>Account</td><td>Sign up</td><td>Free</td></tr><tr><td>Test</td><td>Free pack</td><td>Public link</td></tr><tr><td>Scale</td><td>Paid order</td><td>Same metric</td></tr></tbody></table>\n<h2>Practical tips</h2>\n<p>Start small. Prefer drip-feed on new accounts when available.</p>\n<p>Read service min/max and refill notes before scaling.</p>\n<img src=\"/blog/cheapest-smm-panel-mid.png\" alt=\"প্রতারিত না হয়ে সবচেয়ে সস্তা SMM প্যানেল কীভাবে বেছে নেবেন mid image\" />\n<h2>Next steps</h2>\n<p>Open <a href=\"/signup\">signup</a>, claim a free pack, then upgrade when the line looks right.</p>\n<p>See also our other blog guides and <a href=\"/faq\">FAQ</a>.</p>\n<p>Start now: <a href=\"/signup\">create an account</a> on SSMM Panel.</p>",
+    "excerpt": "সাইনআপ থেকে প্রথম সম্পূর্ণ অর্ডার — শুধু পাবলিক লিংক।",
+    "takeaway": "অ্যাকাউন্ট খুলুন, ফ্রি প্যাক চেষ্টা করুন, ব্যালেন্স যোগ করুন, সার্ভিস ও লিংক বেছে Orders দেখুন।",
+    "imageAlt": "SMM প্যানেলে প্রথম অর্ডার কভার",
+    "imageAlt2": "SMM প্যানেল অর্ডার ধাপ",
+    "contentHtml": "<p>Ready for your <strong>first SMM panel order</strong>? On <a href=\"/signup\">SSMM Panel</a>: create an account, optionally try a free pack, add balance, pick a service, paste a public link, and track it in Orders.</p>
+<p>Public URL only — we never ask for social passwords.</p>
+<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"SMM প্যানেলে প্রথম অর্ডার কভার\" />
+<h2>Step 1 — Create your account</h2>
+<p>Go to <a href=\"/signup\">Sign up</a>. After login you will see New Order, Services, Add Funds, and Orders.</p>
+<p>Vocabulary: <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">what is an SMM panel</a>.</p>
+<h2>Step 2 — Optional free pack</h2>
+<p>Open <a href=\"/free-services\">free services</a>, pick a small pack, paste a public link. Respect cooldown rules.</p>
+<h2>Step 3 — Add balance</h2>
+<p>Visit <a href=\"/payments\">payments</a>, follow instructions, include your username in the note. Start small. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">PayPal guide</a>.</p>
+<h2>Step 4 — Choose a service</h2>
+<p>Browse <a href=\"/services\">services</a>, read rate/min/max, confirm in New Order. Instagram tips: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">Instagram guide</a>.</p>
+<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>
+<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"SMM প্যানেল অর্ডার ধাপ\" />
+<h2>Step 5 — Track in Orders</h2>
+<p>Watch pending, processing, completed. If stuck, message support with username and order ID. Also: <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">free vs paid</a>.</p>
+<h2>Checklist before confirm</h2>
+<p>Logged in · public link ready · min/max OK · balance covers charge · content published.</p>
+<p><a href=\"/signup\">Create your free account</a> and place a calm first order.</p>",
     "faq": [
       {
-        "q": "Password needed?",
-        "a": "No. Public URL only."
+        "q": "Do I need a social password?",
+        "a": "No. Public URL or username only."
       },
       {
-        "q": "Free trial?",
-        "a": "Yes — Free Services packs."
+        "q": "Order without deposit?",
+        "a": "Yes for free packs. Paid rows need balance."
       },
       {
-        "q": "Payments?",
-        "a": "PayPal, crypto, card and more with proof."
+        "q": "Where do I track progress?",
+        "a": "Orders in the dashboard."
       },
       {
-        "q": "API?",
-        "a": "PerfectPanel-compatible /api/v2."
+        "q": "Balance too low?",
+        "a": "Top up on payments, then return to New Order."
       },
       {
-        "q": "Support?",
-        "a": "WhatsApp, Telegram, ticket, email."
+        "q": "First quantity?",
+        "a": "Stay near the service minimum."
       },
       {
-        "q": "Private accounts?",
-        "a": "Usually cannot be fulfilled — make public first."
+        "q": "How to contact support?",
+        "a": "WhatsApp, Telegram, or ticket with username and order ID."
       }
     ]
   }),
