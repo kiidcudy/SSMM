@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 type Props = {
   labels: {
@@ -9,18 +10,26 @@ type Props = {
     password: string;
     submit: string;
     error: string;
+    google?: string;
   };
   requireAdmin?: boolean;
   successHref?: string;
   /** When true, use light admin styling instead of marketing theme classes */
   variant?: "default" | "admin";
+  initialError?: string;
 };
 
-export function LoginForm({ labels, requireAdmin, successHref, variant = "default" }: Props) {
+export function LoginForm({
+  labels,
+  requireAdmin,
+  successHref,
+  variant = "default",
+  initialError = "",
+}: Props) {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
   const isAdmin = variant === "admin" || requireAdmin;
 
@@ -87,32 +96,40 @@ export function LoginForm({ labels, requireAdmin, successHref, variant = "defaul
   }
 
   return (
-    <form onSubmit={onSubmit} className="card space-y-4 p-6">
-      <div>
-        <label className="mb-1 block text-sm text-[var(--color-muted)]">{labels.username}</label>
-        <input
-          className="input"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          autoComplete="username"
-          required
-        />
+    <div className="card space-y-4 p-6">
+      <GoogleSignInButton label={labels.google || "Continue with Google"} />
+      <div className="flex items-center gap-3 text-xs text-[var(--color-muted)]">
+        <span className="h-px flex-1 bg-[var(--color-border)]" />
+        or
+        <span className="h-px flex-1 bg-[var(--color-border)]" />
       </div>
-      <div>
-        <label className="mb-1 block text-sm text-[var(--color-muted)]">{labels.password}</label>
-        <input
-          className="input"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </div>
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
-      <button type="submit" className="btn-primary w-full" disabled={loading}>
-        {labels.submit}
-      </button>
-    </form>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <label className="mb-1 block text-sm text-[var(--color-muted)]">{labels.username}</label>
+          <input
+            className="input"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="username"
+            required
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-[var(--color-muted)]">{labels.password}</label>
+          <input
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        </div>
+        {error ? <p className="text-sm text-red-300">{error}</p> : null}
+        <button type="submit" className="btn-primary w-full" disabled={loading}>
+          {labels.submit}
+        </button>
+      </form>
+    </div>
   );
 }

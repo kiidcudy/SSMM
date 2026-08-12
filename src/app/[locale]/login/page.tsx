@@ -24,12 +24,24 @@ export async function generateMetadata({
   });
 }
 
-export default async function LoginPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function LoginPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { locale: raw } = await params;
+  const sp = await searchParams;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
   const t = getDictionary(locale);
   const c = getPageChrome(locale);
+  const googleError = sp.error
+    ? sp.error === "google_not_configured"
+      ? "Google sign-in is not configured yet."
+      : `Google sign-in failed: ${sp.error}`
+    : "";
 
   return (
     <section className="container-page flex min-h-[70vh] items-center justify-center py-14">
@@ -38,11 +50,13 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
         <p className="mt-2 text-center text-sm text-[var(--color-muted)]">{t.common.secureSsl}</p>
         <div className="mt-8">
           <LoginForm
+            initialError={googleError}
             labels={{
               username: c.formUsername,
               password: c.formPassword,
               submit: c.formLoginBtn,
               error: c.formError,
+              google: "Continue with Google",
             }}
           />
         </div>

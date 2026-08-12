@@ -27,6 +27,8 @@ export type StoredUser = {
   lastAuthAt: string;
   discountPercent: number;
   customRates?: Record<number, number>;
+  /** Google OAuth subject id when signed in with Google. */
+  googleId?: string;
 };
 
 export type OrderStatus =
@@ -511,6 +513,75 @@ export async function findUserByApiKey(apiKey: string) {
 export async function findUserById(id: string) {
   const db = await ensureDb();
   return db.users.find((u) => u.id === id) ?? null;
+}
+
+export async function findUserByEmail(email: string) {
+  const db = await ensureDb();
+  const e = email.trim().toLowerCase();
+  return db.users.find((u) => u.email.toLowerCase() === e) ?? null;
+}
+
+export async function findOrCreateGoogleUser(input: {
+  googleId: string;
+  email: string;
+  name?: string;
+}): Promise<StoredUser> {
+  return modifyDb(async (db) => {
+    const email = input.email.trim().toLowerCase();
+    const now = new Date().toISOString();
+    let user = db.users.find((u) => u.googleId === input.googleId);
+    if (user) {
+      user.lastAuthAt = now;
+      if (email) user.email = email;
+      return user;
+    }
+    user = db.users.find((u) => u.email.toLowerCase() === email);
+    if (user) {
+      user.googleId = input.googleId;
+      user.lastAuthAt = now;
+      return user;
+    }
+    const base =
+      (input.name || email.split("@")[0] || "user")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "")
+        .slice(0, 20) || "user";
+    let username = base;
+    let n = 0;
+    while (db.users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
+      n += 1;
+      username = `${base}${n}`.slice(0, 32);
+    }
+    const created: StoredUser = {
+      id: randomBytes(8).toString("hex"),
+      uid: db.meta.nextUserUid++,
+      username,
+      email,
+      passwordHash: hashPassword(randomBytes(24).toString("hex")),
+      role: "user",
+      balance: 0,
+      spent: 0,
+      status: "active",
+      apiKey: newApiKey(),
+      createdAt: now,
+      lastAuthAt: now,
+      discountPercent: 0,
+      customRates: {},
+      googleId: input.googleId,
+    };
+    if (db.settings.signupBonus > 0) {
+      created.balance = db.settings.signupBonus;
+      await pushLedger(db, {
+        userId: created.id,
+        type: "deposit",
+        amount: db.settings.signupBonus,
+        balanceAfter: created.balance,
+        note: "Signup bonus",
+      });
+    }
+    db.users.push(created);
+    return created;
+  });
 }
 
 export async function createUser(input: {

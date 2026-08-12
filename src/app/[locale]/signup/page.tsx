@@ -44,6 +44,7 @@ export default async function SignupPage({ params }: { params: Promise<{ locale:
               password: c.formPassword,
               submit: c.formSignupBtn,
               error: c.formError,
+              google: "Continue with Google",
             }}
           />
         </div>
