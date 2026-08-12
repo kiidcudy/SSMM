@@ -66,25 +66,7 @@ export const posts: Record<string, BlogPost> = {
     "takeaway": "Hesap aç, isteğe bağlı ücretsiz paket dene, küçük bakiye yükle, servis ve linki seç, Orders’ta takip et.",
     "imageAlt": "SMM panelde ilk sipariş nasıl verilir kapak",
     "imageAlt2": "SMM panel sipariş adımları görseli",
-    "contentHtml": "<p><strong>İlk SMM panel siparişini</strong> vermeye hazır mısın? <a href=\"/signup\">SSMM Panel</a>’de yol aynı: hesap aç, isteğe bağlı ücretsiz paket dene, bakiye yükle, servis seç, herkese açık link yapıştır ve Orders’ta takip et.</p>
-<p>Yalnızca herkese açık URL gerekir; sosyal medya şifresi istemeyiz.</p>
-<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"SMM panelde ilk sipariş nasıl verilir kapak\" />
-<h2>Adım 1 — Hesap oluştur</h2>
-<p><a href=\"/signup\">Kayıt</a> ol, kullanıcı adı ve e-posta ile panel şifreni belirle. Girişten sonra New Order, Services, Add Funds ve Orders bir arada.</p>
-<p>Terimler için <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">SMM panel nedir</a> yazısına bak.</p>
-<h2>Adım 2 — İsteğe bağlı ücretsiz paket</h2>
-<p><a href=\"/free-services\">Ücretsiz servisler</a> sayfasından küçük bir paket seç, herkese açık link yapıştır. Cooldown kurallarına uy.</p>
-<h2>Adım 3 — Bakiye yükle</h2>
-<p><a href=\"/payments\">Ödemeler</a> sayfasından yöntem seç, notta kullanıcı adını yaz, kanıtı destekle paylaş. Küçük tutarla başla. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">PayPal yükleme rehberi</a>.</p>
-<h2>Adım 4 — Servis seç ve sipariş ver</h2>
-<p><a href=\"/services\">Servisler</a>den platformunu seç; 1K oranı, min/max ve notları oku. New Order’da onayla. Instagram: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">Instagram rehberi</a>.</p>
-<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>
-<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"SMM panel sipariş adımları görseli\" />
-<h2>Adım 5 — Orders’ta takip</h2>
-<p>Pending, processing, completed durumlarını Orders’ta gör. Takılı kalırsa kullanıcı adı + sipariş ID ile destek yaz. <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">Ücretsiz vs ücretli</a>.</p>
-<h2>Onay öncesi kısa kontrol</h2>
-<p>Giriş yapılmış · herkese açık link hazır · min/max uygun · bakiye yeterli · içerik yayında.</p>
-<p><a href=\"/signup\">Ücretsiz hesap aç</a> ve sakin bir ilk sipariş ver.</p>",
+    "contentHtml": "<p><strong>İlk SMM panel siparişini</strong> vermeye hazır mısın? <a href=\"/signup\">SSMM Panel</a>’de yol aynı: hesap aç, isteğe bağlı ücretsiz paket dene, bakiye yükle, servis seç, herkese açık link yapıştır ve Orders’ta takip et.</p>\n<p>Yalnızca herkese açık URL gerekir; sosyal medya şifresi istemeyiz.</p>\n<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"SMM panelde ilk sipariş nasıl verilir kapak\" />\n<h2>Adım 1 — Hesap oluştur</h2>\n<p><a href=\"/signup\">Kayıt</a> ol, kullanıcı adı ve e-posta ile panel şifreni belirle. Girişten sonra New Order, Services, Add Funds ve Orders bir arada.</p>\n<p>Terimler için <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">SMM panel nedir</a> yazısına bak.</p>\n<h2>Adım 2 — İsteğe bağlı ücretsiz paket</h2>\n<p><a href=\"/free-services\">Ücretsiz servisler</a> sayfasından küçük bir paket seç, herkese açık link yapıştır. Cooldown kurallarına uy.</p>\n<h2>Adım 3 — Bakiye yükle</h2>\n<p><a href=\"/payments\">Ödemeler</a> sayfasından yöntem seç, notta kullanıcı adını yaz, kanıtı destekle paylaş. Küçük tutarla başla. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">PayPal yükleme rehberi</a>.</p>\n<h2>Adım 4 — Servis seç ve sipariş ver</h2>\n<p><a href=\"/services\">Servisler</a>den platformunu seç; 1K oranı, min/max ve notları oku. New Order’da onayla. Instagram: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">Instagram rehberi</a>.</p>\n<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>\n<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"SMM panel sipariş adımları görseli\" />\n<h2>Adım 5 — Orders’ta takip</h2>\n<p>Pending, processing, completed durumlarını Orders’ta gör. Takılı kalırsa kullanıcı adı + sipariş ID ile destek yaz. <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">Ücretsiz vs ücretli</a>.</p>\n<h2>Onay öncesi kısa kontrol</h2>\n<p>Giriş yapılmış · herkese açık link hazır · min/max uygun · bakiye yeterli · içerik yayında.</p>\n<p><a href=\"/signup\">Ücretsiz hesap aç</a> ve sakin bir ilk sipariş ver.</p>",
     "faq": [
       {
         "q": "Instagram/TikTok şifresi gerekir mi?",

@@ -66,25 +66,7 @@ export const posts: Record<string, BlogPost> = {
     "takeaway": "Crea cuenta, prueba un pack gratis, añade saldo, elige servicio y enlace, sigue el estado en Orders.",
     "imageAlt": "Cómo hacer el primer pedido en un panel SMM",
     "imageAlt2": "Pasos del pedido en panel SMM",
-    "contentHtml": "<p>¿Listo para tu <strong>primer pedido en un panel SMM</strong>? En <a href=\"/signup\">SSMM Panel</a>: cuenta, pack gratis opcional, saldo, servicio, enlace público y seguimiento en Orders.</p>
-<p>Solo URL pública; nunca pedimos contraseña de redes.</p>
-<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"Cómo hacer el primer pedido en un panel SMM\" />
-<h2>Paso 1 — Crear cuenta</h2>
-<p>Ve a <a href=\"/signup\">registro</a>. En el panel verás New Order, Services, Add Funds y Orders.</p>
-<p>Vocabulario: <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">qué es un panel SMM</a>.</p>
-<h2>Paso 2 — Pack gratis opcional</h2>
-<p>En <a href=\"/free-services\">servicios gratis</a> elige un pack pequeño y pega un enlace público. Respeta el cooldown.</p>
-<h2>Paso 3 — Añadir saldo</h2>
-<p>Abre <a href=\"/payments\">pagos</a>, sigue las instrucciones e incluye tu usuario en la nota. Empieza con poco. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">guía PayPal</a>.</p>
-<h2>Paso 4 — Elegir servicio</h2>
-<p>En <a href=\"/services\">servicios</a> lee tarifa/1K, min/max y notas. Confirma en New Order. Instagram: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">guía Instagram</a>.</p>
-<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>
-<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"Pasos del pedido en panel SMM\" />
-<h2>Paso 5 — Seguir en Orders</h2>
-<p>Mira pending/processing/completed. Si se atasca, escribe a soporte con usuario e ID. Más: <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">gratis vs de pago</a>.</p>
-<h2>Checklist antes de confirmar</h2>
-<p>Sesión iniciada · enlace público · min/max OK · saldo suficiente · contenido publicado.</p>
-<p><a href=\"/signup\">Crea tu cuenta</a> y haz un primer pedido tranquilo.</p>",
+    "contentHtml": "<p>¿Listo para tu <strong>primer pedido en un panel SMM</strong>? En <a href=\"/signup\">SSMM Panel</a>: cuenta, pack gratis opcional, saldo, servicio, enlace público y seguimiento en Orders.</p>\n<p>Solo URL pública; nunca pedimos contraseña de redes.</p>\n<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"Cómo hacer el primer pedido en un panel SMM\" />\n<h2>Paso 1 — Crear cuenta</h2>\n<p>Ve a <a href=\"/signup\">registro</a>. En el panel verás New Order, Services, Add Funds y Orders.</p>\n<p>Vocabulario: <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">qué es un panel SMM</a>.</p>\n<h2>Paso 2 — Pack gratis opcional</h2>\n<p>En <a href=\"/free-services\">servicios gratis</a> elige un pack pequeño y pega un enlace público. Respeta el cooldown.</p>\n<h2>Paso 3 — Añadir saldo</h2>\n<p>Abre <a href=\"/payments\">pagos</a>, sigue las instrucciones e incluye tu usuario en la nota. Empieza con poco. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">guía PayPal</a>.</p>\n<h2>Paso 4 — Elegir servicio</h2>\n<p>En <a href=\"/services\">servicios</a> lee tarifa/1K, min/max y notas. Confirma en New Order. Instagram: <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">guía Instagram</a>.</p>\n<table><thead><tr><th>Field</th><th>What</th><th>Tip</th></tr></thead><tbody><tr><td>Service</td><td>Platform + metric</td><td>Match your goal</td></tr><tr><td>Link</td><td>Public URL</td><td>Never a password</td></tr><tr><td>Quantity</td><td>Within min/max</td><td>Start small</td></tr></tbody></table>\n<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"Pasos del pedido en panel SMM\" />\n<h2>Paso 5 — Seguir en Orders</h2>\n<p>Mira pending/processing/completed. Si se atasca, escribe a soporte con usuario e ID. Más: <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">gratis vs de pago</a>.</p>\n<h2>Checklist antes de confirmar</h2>\n<p>Sesión iniciada · enlace público · min/max OK · saldo suficiente · contenido publicado.</p>\n<p><a href=\"/signup\">Crea tu cuenta</a> y haz un primer pedido tranquilo.</p>",
     "faq": [
       {
         "q": "¿Contraseña de Instagram?",
