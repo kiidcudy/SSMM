@@ -28,6 +28,12 @@ export async function POST(req: Request) {
 
   try {
     const body = schema.parse(await req.json());
+    if (body.method !== "cryptomus" && body.method !== "binance-pay") {
+      return NextResponse.json(
+        { error: "Please contact us to pay with this method." },
+        { status: 400 },
+      );
+    }
     const row = await createFundRequest({
       userId: session.id,
       username: session.username,
