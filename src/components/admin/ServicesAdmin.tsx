@@ -40,19 +40,32 @@ export function ServicesAdmin({
   const [rate, setRate] = useState("");
   const [description, setDescription] = useState("");
   const [filter, setFilter] = useState("All");
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
   const byCat = useMemo(() => {
+    const q = query.trim().toLowerCase();
     const map: Record<string, AdminServiceRow[]> = {};
     for (const s of services) {
       if (filter === "Enabled" && !s.enabled) continue;
       if (filter === "Disabled" && s.enabled) continue;
       if (filter === "Hidden" && !s.hidden) continue;
+      if (q) {
+        const idHit =
+          String(s.id).includes(q) ||
+          (s.providerServiceId != null && String(s.providerServiceId).includes(q));
+        const textHit =
+          s.name.toLowerCase().includes(q) ||
+          s.category.toLowerCase().includes(q) ||
+          (s.description || "").toLowerCase().includes(q) ||
+          (s.type || "").toLowerCase().includes(q);
+        if (!idHit && !textHit) continue;
+      }
       (map[s.category] ??= []).push(s);
     }
     return map;
-  }, [services, filter]);
+  }, [services, filter, query]);
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -88,16 +101,25 @@ export function ServicesAdmin({
             Import services
           </button>
         </div>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="rounded border border-gray-300 px-2 py-1.5 text-sm"
-        >
-          <option>All</option>
-          <option>Enabled</option>
-          <option>Disabled</option>
-          <option>Hidden</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or service ID…"
+            className="w-64 rounded border border-gray-300 px-3 py-1.5 text-sm"
+          />
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+          >
+            <option>All</option>
+            <option>Enabled</option>
+            <option>Disabled</option>
+            <option>Hidden</option>
+          </select>
+        </div>
       </div>
 
       <div className="mt-3">
@@ -114,7 +136,9 @@ export function ServicesAdmin({
       <div className="mt-4 space-y-3">
         {Object.keys(byCat).length === 0 ? (
           <div className="rounded border border-gray-200 bg-white px-4 py-10 text-center text-gray-500">
-            No services yet. Use Import services / Sync.
+            {query.trim()
+              ? "No services match this search."
+              : "No services yet. Use Import services / Sync."}
           </div>
         ) : (
           Object.entries(byCat).map(([cat, rows]) => {
