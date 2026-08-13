@@ -181,6 +181,14 @@ export function NewOrderForm({
     if (!service) return;
     setError("");
     setMessage("");
+    if (fields.needsQuantity || fields.quantityFromComments) {
+      if (billQty < service.min || billQty > service.max) {
+        setError(
+          `Quantity must be between ${service.min.toLocaleString("en-US")} and ${service.max.toLocaleString("en-US")}`,
+        );
+        return;
+      }
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {
@@ -422,8 +430,7 @@ export function NewOrderForm({
             })}
           </div>
           <p className="mt-3 border-t border-[#243049] pt-2 text-xs text-[#6b778f]">
-            Type: {service.providerType} · Min {service.min.toLocaleString("en-US")} · Max{" "}
-            {service.max.toLocaleString("en-US")} · ${service.rate.toFixed(4)} / 1000
+            Type: {service.providerType} · ${service.rate.toFixed(4)} / 1000
           </p>
         </div>
       ) : null}
@@ -495,9 +502,23 @@ export function NewOrderForm({
             value={quantity}
             min={service?.min}
             max={service?.max}
+            step={1}
             onChange={(e) => setQuantity(Number(e.target.value))}
             required
           />
+          {service ? (
+            <p className="mt-1.5 text-sm text-[#93a0b8]">
+              Min:{" "}
+              <span className="font-medium text-[#e8eefc]">
+                {service.min.toLocaleString("en-US")}
+              </span>
+              {" · "}
+              Max:{" "}
+              <span className="font-medium text-[#e8eefc]">
+                {service.max.toLocaleString("en-US")}
+              </span>
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -505,7 +526,19 @@ export function NewOrderForm({
         <div className="rounded-lg border border-[#243049] px-4 py-3 text-sm text-[#93a0b8]">
           Quantity from comments:{" "}
           <span className="font-semibold text-[#e8eefc]">{commentLines || 0}</span>
-          {service ? ` (min ${service.min} · max ${service.max})` : null}
+          {service ? (
+            <p className="mt-1.5">
+              Min:{" "}
+              <span className="font-medium text-[#e8eefc]">
+                {service.min.toLocaleString("en-US")}
+              </span>
+              {" · "}
+              Max:{" "}
+              <span className="font-medium text-[#e8eefc]">
+                {service.max.toLocaleString("en-US")}
+              </span>
+            </p>
+          ) : null}
         </div>
       ) : null}
 

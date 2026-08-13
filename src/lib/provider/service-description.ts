@@ -20,10 +20,6 @@ function cleanText(raw: string): string {
     .trim();
 }
 
-function fmtNum(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function hasLine(lines: string[], needle: RegExp): boolean {
   return lines.some((l) => needle.test(l));
 }
@@ -101,8 +97,9 @@ function decorateFeature(feature: string): string {
   if (/real\s*app\s*data|real\s*data|hq\s*accounts|old\s*accounts|organic|high\s*quality|quality/i.test(lower)) {
     return `★ ${f}`;
   }
-  if (/max\s*:?\s*[\d.,]+\s*[kmb]?/i.test(lower)) {
-    return `📦 ${f}`;
+  // Skip name tags that only restate order quantity limits (shown under Quantity)
+  if (/^(max|min)\s*:?\s*[\d.,]+\s*[kmb]?$/i.test(lower)) {
+    return "";
   }
   if (/minute|hour|watch\s*time|duration|retention/i.test(lower)) {
     return `⏱ ${f}`;
@@ -198,8 +195,6 @@ export function buildServiceDescription(input: DescriptionInput): string {
   if (typeLabel && typeLabel.toLowerCase() !== "default") {
     lines.push(`◎ Order type: ${typeLabel}`);
   }
-
-  lines.push(`📦 Quantity range: ${fmtNum(input.min)} – ${fmtNum(input.max)}`);
 
   const hint = platformHint(title, input.category || "");
   if (hint) lines.push(hint);

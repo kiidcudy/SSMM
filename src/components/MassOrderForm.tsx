@@ -26,6 +26,12 @@ export function MassOrderForm({ services }: { services: PanelService[] }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!service || !links.length) return;
+    if (quantity < service.min || quantity > service.max) {
+      setError(
+        `Quantity must be between ${service.min.toLocaleString("en-US")} and ${service.max.toLocaleString("en-US")}`,
+      );
+      return;
+    }
     setLoading(true);
     setError("");
     setResults([]);
@@ -81,9 +87,23 @@ export function MassOrderForm({ services }: { services: PanelService[] }) {
           value={quantity}
           min={service?.min}
           max={service?.max}
+          step={1}
           onChange={(e) => setQuantity(Number(e.target.value))}
           required
         />
+        {service ? (
+          <p className="mt-1.5 text-sm text-[#93a0b8]">
+            Min:{" "}
+            <span className="font-medium text-[#e8eefc]">
+              {service.min.toLocaleString("en-US")}
+            </span>
+            {" · "}
+            Max:{" "}
+            <span className="font-medium text-[#e8eefc]">
+              {service.max.toLocaleString("en-US")}
+            </span>
+          </p>
+        ) : null}
       </div>
       <div>
         <label className="mb-1 block text-sm text-[#93a0b8]">Links</label>
