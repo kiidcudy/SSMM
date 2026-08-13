@@ -117,6 +117,8 @@ export type ChildPanel = {
 export type ServiceOverride = {
   enabled?: boolean;
   hidden?: boolean;
+  /** Soft-delete: stays removed across provider sync */
+  deleted?: boolean;
   rate?: number;
   name?: string;
   description?: string;
@@ -685,18 +687,20 @@ function applyServiceOverrides(
   items: PanelService[],
   overrides: Record<string, ServiceOverride>,
 ): PanelService[] {
-  return items.map((s) => {
-    const ov = overrides[String(s.id)];
-    if (!ov) return s;
-    return {
-      ...s,
-      name: ov.name ?? s.name,
-      rate: ov.rate ?? s.rate,
-      description: ov.description ?? s.description,
-      category: ov.category ?? s.category,
-      dripfeed: ov.dripfeed ?? s.dripfeed,
-    };
-  });
+  return items
+    .filter((s) => !overrides[String(s.id)]?.deleted)
+    .map((s) => {
+      const ov = overrides[String(s.id)];
+      if (!ov) return s;
+      return {
+        ...s,
+        name: ov.name ?? s.name,
+        rate: ov.rate ?? s.rate,
+        description: ov.description ?? s.description,
+        category: ov.category ?? s.category,
+        dripfeed: ov.dripfeed ?? s.dripfeed,
+      };
+    });
 }
 
 export async function listServices() {
@@ -1163,8 +1167,12 @@ export async function servicesBulk(serviceIds: number[], operation: ServicesBulk
   if (operation.op === "delete") {
     await modifyDb(async (db) => {
       const set = new Set(ids);
+      // Drop local-only copies; mark provider lines deleted so sync cannot restore them
       db.services = db.services.filter((s) => !set.has(s.id));
-      for (const id of ids) delete db.serviceOverrides[String(id)];
+      for (const id of ids) {
+        const key = String(id);
+        db.serviceOverrides[key] = { ...db.serviceOverrides[key], deleted: true };
+      }
     });
     clearServicesCache();
     return { count: ids.length };
@@ -1245,10 +1253,7 @@ export async function servicesBulk(serviceIds: number[], operation: ServicesBulk
 }
 
 export async function deleteServiceLocal(serviceId: number) {
-  return modifyDb(async (db) => {
-    db.services = db.services.filter((s) => s.id !== serviceId);
-    delete db.serviceOverrides[String(serviceId)];
-  });
+  await servicesBulk([serviceId], { op: "delete" });
 }
 
 export async function duplicateService(serviceId: number) {

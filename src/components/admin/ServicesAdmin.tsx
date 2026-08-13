@@ -319,7 +319,7 @@ export function ServicesAdmin({
             const isCollapsed = collapsed[cat];
             const catAllSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
             return (
-              <div key={cat} className="overflow-hidden rounded border border-gray-200 bg-white">
+              <div key={cat} className="overflow-visible rounded border border-gray-200 bg-white">
                 <div className="flex items-center justify-between bg-gray-100 px-3 py-2 text-sm">
                   <span className="font-medium">{cat}</span>
                   <div className="flex items-center gap-3">
