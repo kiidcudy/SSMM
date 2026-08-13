@@ -120,6 +120,9 @@ export type ServiceOverride = {
   rate?: number;
   name?: string;
   description?: string;
+  category?: string;
+  dripfeed?: boolean;
+  denyDuplicates?: boolean;
 };
 
 export type LedgerEntry = {
@@ -690,6 +693,8 @@ function applyServiceOverrides(
       name: ov.name ?? s.name,
       rate: ov.rate ?? s.rate,
       description: ov.description ?? s.description,
+      category: ov.category ?? s.category,
+      dripfeed: ov.dripfeed ?? s.dripfeed,
     };
   });
 }
@@ -1129,9 +1134,114 @@ export async function setServiceOverride(serviceId: number, patch: ServiceOverri
       if (patch.rate != null) svc.rate = patch.rate;
       if (patch.name != null) svc.name = patch.name;
       if (patch.description != null) svc.description = patch.description;
+      if (patch.category != null) svc.category = patch.category;
+      if (patch.dripfeed != null) svc.dripfeed = patch.dripfeed;
     }
     return db.serviceOverrides[key];
   });
+}
+
+export type ServicesBulkOp =
+  | { op: "enable" }
+  | { op: "disable" }
+  | { op: "hide" }
+  | { op: "unhide" }
+  | { op: "delete" }
+  | { op: "set_rate"; rate: number }
+  | { op: "multiply_rate"; factor: number }
+  | { op: "set_category"; category: string }
+  | { op: "set_dripfeed"; dripfeed: boolean }
+  | { op: "set_deny_duplicates"; denyDuplicates: boolean }
+  | { op: "clear_custom_rates" }
+  | { op: "replace_name"; find: string; replace: string }
+  | { op: "set_description"; description: string };
+
+export async function servicesBulk(serviceIds: number[], operation: ServicesBulkOp) {
+  const ids = [...new Set(serviceIds.map(Number).filter((n) => Number.isFinite(n) && n > 0))];
+  if (!ids.length) throw new Error("No services selected");
+
+  if (operation.op === "delete") {
+    await modifyDb(async (db) => {
+      const set = new Set(ids);
+      db.services = db.services.filter((s) => !set.has(s.id));
+      for (const id of ids) delete db.serviceOverrides[String(id)];
+    });
+    clearServicesCache();
+    return { count: ids.length };
+  }
+
+  if (operation.op === "clear_custom_rates") {
+    await modifyDb(async (db) => {
+      for (const u of db.users) {
+        if (!u.customRates) continue;
+        for (const id of ids) delete u.customRates[id];
+      }
+    });
+    return { count: ids.length };
+  }
+
+  await modifyDb(async (db) => {
+    for (const id of ids) {
+      const key = String(id);
+      const svc = db.services.find((s) => s.id === id);
+      const prev = db.serviceOverrides[key] || {};
+      const patch: ServiceOverride = { ...prev };
+
+      switch (operation.op) {
+        case "enable":
+          patch.enabled = true;
+          break;
+        case "disable":
+          patch.enabled = false;
+          break;
+        case "hide":
+          patch.hidden = true;
+          break;
+        case "unhide":
+          patch.hidden = false;
+          break;
+        case "set_rate":
+          patch.rate = operation.rate;
+          if (svc) svc.rate = operation.rate;
+          break;
+        case "multiply_rate": {
+          const base = patch.rate ?? svc?.rate ?? 0;
+          const next = Math.round(base * operation.factor * 10000) / 10000;
+          patch.rate = next;
+          if (svc) svc.rate = next;
+          break;
+        }
+        case "set_category":
+          patch.category = operation.category;
+          if (svc) svc.category = operation.category;
+          break;
+        case "set_dripfeed":
+          patch.dripfeed = operation.dripfeed;
+          if (svc) svc.dripfeed = operation.dripfeed;
+          break;
+        case "set_deny_duplicates":
+          patch.denyDuplicates = operation.denyDuplicates;
+          break;
+        case "replace_name": {
+          const current = patch.name ?? svc?.name ?? "";
+          const next = current.split(operation.find).join(operation.replace);
+          patch.name = next;
+          if (svc) svc.name = next;
+          break;
+        }
+        case "set_description":
+          patch.description = operation.description;
+          if (svc) svc.description = operation.description;
+          break;
+        default:
+          break;
+      }
+
+      db.serviceOverrides[key] = patch;
+    }
+  });
+  clearServicesCache();
+  return { count: ids.length };
 }
 
 export async function deleteServiceLocal(serviceId: number) {

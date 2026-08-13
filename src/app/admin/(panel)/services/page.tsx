@@ -13,7 +13,7 @@ export default async function AdminServicesPage() {
         const ov = overrides[String(s.id)] || {};
         return {
           id: s.id,
-          category: s.category,
+          category: ov.category || s.category,
           name: ov.name || s.name,
           type: s.type || "Default",
           rate: ov.rate ?? s.rate,
@@ -23,6 +23,7 @@ export default async function AdminServicesPage() {
           providerServiceId: s.providerServiceId,
           enabled: ov.enabled !== false,
           hidden: Boolean(ov.hidden),
+          dripfeed: ov.dripfeed ?? s.dripfeed,
         };
       })}
     />

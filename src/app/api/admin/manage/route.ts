@@ -10,6 +10,7 @@ import {
   duplicateService,
   replyTicket,
   setServiceOverride,
+  servicesBulk,
   updateAppearance,
   updateOrder,
   updatePanelSettings,
@@ -118,8 +119,57 @@ export async function POST(req: Request) {
           rate: body.rate != null ? Number(body.rate) : undefined,
           name: body.name != null ? String(body.name) : undefined,
           description: body.description != null ? String(body.description) : undefined,
+          category: body.category != null ? String(body.category) : undefined,
+          dripfeed: body.dripfeed as boolean | undefined,
+          denyDuplicates: body.denyDuplicates as boolean | undefined,
         });
         return NextResponse.json({ ok: true, override: ov });
+      }
+      case "services_bulk": {
+        const serviceIds = Array.isArray(body.serviceIds)
+          ? body.serviceIds.map((x) => Number(x))
+          : [];
+        const op = String(body.op || "");
+        let operation: Parameters<typeof servicesBulk>[1];
+        switch (op) {
+          case "enable":
+          case "disable":
+          case "hide":
+          case "unhide":
+          case "delete":
+          case "clear_custom_rates":
+            operation = { op };
+            break;
+          case "set_rate":
+            operation = { op, rate: Number(body.rate) };
+            break;
+          case "multiply_rate":
+            operation = { op, factor: Number(body.factor) };
+            break;
+          case "set_category":
+            operation = { op, category: String(body.category || "") };
+            break;
+          case "set_dripfeed":
+            operation = { op, dripfeed: Boolean(body.dripfeed) };
+            break;
+          case "set_deny_duplicates":
+            operation = { op, denyDuplicates: Boolean(body.denyDuplicates) };
+            break;
+          case "replace_name":
+            operation = {
+              op,
+              find: String(body.find || ""),
+              replace: String(body.replace ?? ""),
+            };
+            break;
+          case "set_description":
+            operation = { op, description: String(body.description || "") };
+            break;
+          default:
+            return NextResponse.json({ error: `Unknown bulk op: ${op}` }, { status: 400 });
+        }
+        const result = await servicesBulk(serviceIds, operation);
+        return NextResponse.json({ ok: true, ...result });
       }
       case "duplicate_service": {
         const svc = await duplicateService(Number(body.serviceId));

@@ -5,6 +5,7 @@ import {
   adjustBalance,
   createOrder,
   findUserById,
+  getServiceOverrides,
   listOrders,
   listServices,
   updateOrder,
@@ -55,6 +56,23 @@ export async function POST(req: Request) {
     const services = await listServices();
     const service = services.find((s) => s.id === body.serviceId);
     if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+
+    const overrides = await getServiceOverrides();
+    const denyDup = Boolean(overrides[String(service.id)]?.denyDuplicates);
+    if (denyDup && body.link?.trim()) {
+      const open = (await listOrders(session.id)).some(
+        (o) =>
+          o.serviceId === service.id &&
+          o.link.trim().toLowerCase() === body.link!.trim().toLowerCase() &&
+          !["completed", "canceled", "partial", "refunded"].includes(o.status),
+      );
+      if (open) {
+        return NextResponse.json(
+          { error: "Duplicate link not allowed while another order is still open for this service" },
+          { status: 400 },
+        );
+      }
+    }
 
     const fields = fieldsForService(service);
     let quantity = body.quantity ?? service.min;
