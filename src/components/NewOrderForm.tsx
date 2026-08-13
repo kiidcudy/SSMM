@@ -42,6 +42,7 @@ export function NewOrderForm({
   services,
   labels,
   aside,
+  initialServiceId,
 }: {
   services: PanelService[];
   labels: {
@@ -55,17 +56,22 @@ export function NewOrderForm({
     avgDelivery: string;
   };
   aside?: ReactNode;
+  initialServiceId?: number;
 }) {
   const categories = useMemo(
     () => Array.from(new Set(services.map((s) => s.category))),
     [services],
   );
-  const [category, setCategory] = useState(categories[0] || "");
+  const initialService = useMemo(
+    () => (initialServiceId ? services.find((s) => s.id === initialServiceId) : undefined),
+    [services, initialServiceId],
+  );
+  const [category, setCategory] = useState(initialService?.category || categories[0] || "");
   const filtered = useMemo(
     () => services.filter((s) => s.category === category),
     [services, category],
   );
-  const [serviceId, setServiceId] = useState(filtered[0]?.id ?? 0);
+  const [serviceId, setServiceId] = useState(initialService?.id ?? filtered[0]?.id ?? 0);
   const service = services.find((s) => s.id === serviceId) ?? filtered[0];
   const fields = fieldsForService({
     type: service?.type || "default",

@@ -6,11 +6,9 @@ import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { createMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/JsonLd";
 import { LocaleLink } from "@/components/LocaleLink";
-import { servicesByCategory } from "@/lib/data/catalog";
 import { listServices } from "@/lib/store/db";
 import { getPageChrome } from "@/lib/i18n/pages/chrome";
-import { detectPlatform } from "@/lib/platforms";
-import { PlatformIcon } from "@/components/PlatformIcon";
+import { PublicServicesCatalog } from "@/components/PublicServicesCatalog";
 
 export async function generateMetadata({
   params,
@@ -42,7 +40,6 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
   const t = getDictionary(locale);
   const c = getPageChrome(locale);
   const services = await listServices();
-  const grouped = servicesByCategory(services);
 
   return (
     <>
@@ -72,54 +69,43 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
         </p>
       </section>
 
-      <section className="container-page space-y-10 pb-20">
+      <section className="container-page pb-20">
         {services.length === 0 ? (
           <p className="text-[var(--color-muted)]">Services are syncing from the provider. Check back shortly.</p>
         ) : (
-          Object.entries(grouped).map(([category, rows]) => (
-            <div key={category}>
-              <h2 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-xl font-semibold">
-                <PlatformIcon platform={detectPlatform(category)} size="md" />
-                {category}
-              </h2>
-              <div className="mt-4 overflow-x-auto rounded-2xl border border-[var(--color-border)]">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead className="bg-[#0a1220] text-xs uppercase tracking-wide text-[var(--color-muted)]">
-                    <tr>
-                      <th className="px-4 py-3">{c.servicesColId}</th>
-                      <th className="px-4 py-3">{c.servicesColService}</th>
-                      <th className="px-4 py-3">{c.servicesColRate}</th>
-                      <th className="px-4 py-3">{c.servicesColMin}</th>
-                      <th className="px-4 py-3">{c.servicesColMax}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((s) => (
-                      <tr key={s.id} className="border-t border-[var(--color-border)]">
-                        <td className="px-4 py-3 text-cyan-300">{s.id}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-start gap-2">
-                            <PlatformIcon platform={detectPlatform(s.category, s.name)} size="sm" className="mt-0.5" />
-                            <div>
-                              <p className="font-medium">{s.name}</p>
-                              {s.description ? (
-                                <p className="mt-1 max-w-xl whitespace-pre-line text-xs leading-relaxed text-[var(--color-muted)]">
-                                  {s.description}
-                                </p>
-                              ) : null}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">${s.rate.toFixed(4)}</td>
-                        <td className="px-4 py-3">{s.min}</td>
-                        <td className="px-4 py-3">{s.max}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))
+          <PublicServicesCatalog
+            services={services.map((s) => ({
+              id: s.id,
+              name: s.name,
+              category: s.category,
+              rate: s.rate,
+              min: s.min,
+              max: s.max,
+              description: s.description,
+              refill: s.refill,
+              cancel: s.cancel,
+              dripfeed: s.dripfeed,
+            }))}
+            buyHref="/dashboard/new-order?service={id}"
+            labels={{
+              search: "Search in services",
+              category: "Category",
+              advanced: "Advanced Filters",
+              allCategories: "All categories",
+              min: c.servicesColMin,
+              max: c.servicesColMax,
+              description: t.dash.description,
+              buyNow: "Buy Now",
+              close: "Close",
+              noResults: "No services match your search or filters.",
+              refill: "Refill",
+              cancel: "Cancel",
+              dripfeed: "Drip-feed",
+              instant: "Instant start",
+              clearFilters: "Clear filters",
+              results: "{count} services",
+            }}
+          />
         )}
       </section>
     </>

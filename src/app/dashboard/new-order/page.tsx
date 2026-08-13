@@ -3,10 +3,20 @@ import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { readPreferredLocale } from "@/lib/i18n/locale-preference";
 import { NewOrderForm } from "@/components/NewOrderForm";
 
-export default async function NewOrderPage() {
+export default async function NewOrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ service?: string }>;
+}) {
   const locale = await readPreferredLocale();
   const services = await listServices();
   const t = getDictionary(locale);
+  const sp = await searchParams;
+  const initialServiceId = Number(sp.service);
+  const validInitial =
+    Number.isFinite(initialServiceId) && services.some((s) => s.id === initialServiceId)
+      ? initialServiceId
+      : undefined;
 
   return (
     <div className="w-full max-w-5xl">
@@ -14,6 +24,7 @@ export default async function NewOrderPage() {
       <div className="mt-6">
         <NewOrderForm
           services={services}
+          initialServiceId={validInitial}
           labels={{
             category: t.dash.category,
             service: t.dash.service,
