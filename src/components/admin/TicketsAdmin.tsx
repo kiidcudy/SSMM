@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/admin/Modal";
 import { adminAction } from "@/components/admin/adminApi";
@@ -8,6 +9,7 @@ import { adminAction } from "@/components/admin/adminApi";
 export type AdminTicketMessage = {
   id: string;
   authorRole: string;
+  authorName: string;
   body: string;
   createdAt: string;
 };
@@ -30,6 +32,7 @@ export type AdminTicketRow = {
 export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; staff: string[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
+  const [searchBy, setSearchBy] = useState<"id" | "user" | "subject">("id");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
@@ -37,19 +40,19 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
   const [form, setForm] = useState({ username: "", subject: "", body: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const list = useMemo(() => {
     let rows = tickets;
     if (unreadOnly) rows = rows.filter((t) => t.unread);
     const s = q.trim().toLowerCase();
     if (!s) return rows;
-    return rows.filter(
-      (t) =>
-        String(t.uid).includes(s) ||
-        t.username.toLowerCase().includes(s) ||
-        t.subject.toLowerCase().includes(s),
-    );
-  }, [tickets, q, unreadOnly]);
+    return rows.filter((t) => {
+      if (searchBy === "id") return String(t.uid).includes(s);
+      if (searchBy === "user") return t.username.toLowerCase().includes(s);
+      return t.subject.toLowerCase().includes(s);
+    });
+  }, [tickets, q, unreadOnly, searchBy]);
 
   const view = viewId ? tickets.find((t) => t.id === viewId) || null : null;
 
@@ -73,9 +76,207 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
   function openTicket(t: AdminTicketRow) {
     setViewId(t.id);
     setReply("");
+    setErr("");
     if (t.unread) {
       void run(() => adminAction("update_ticket", { ticketId: t.id, unread: false }));
     }
+  }
+
+  function toggleAll(checked: boolean) {
+    setSelected(checked ? new Set(list.map((t) => t.id)) : new Set());
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function statusLabel(status: string) {
+    if (status === "open") return "Pending";
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  if (view) {
+    const thread = [...view.messages].reverse();
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => setViewId(null)}
+          className="mb-4 text-sm text-blue-600 hover:underline"
+        >
+          &lt; Back
+        </button>
+        {err ? <p className="mb-3 text-sm text-red-600">{err}</p> : null}
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_200px]">
+          <div>
+            <div className="mb-4 flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
+              <h1 className="text-xl font-semibold text-gray-900">{view.subject}</h1>
+              <p className="shrink-0 text-sm text-gray-500">ID: {view.uid}</p>
+            </div>
+
+            {view.status !== "closed" ? (
+              <div className="mb-6 rounded border border-gray-200 bg-white">
+                <div className="flex items-center gap-1 border-b border-gray-100 px-2 py-1.5 text-gray-500">
+                  <ToolbarBtn label="B" title="Bold" />
+                  <ToolbarBtn label="I" title="Italic" italic />
+                  <ToolbarBtn label="“" title="Quote" />
+                  <ToolbarBtn label="•" title="List" />
+                  <ToolbarBtn label="1." title="Numbered" />
+                  <span className="ml-auto text-xs text-blue-600">Insert saved reply</span>
+                </div>
+                <textarea
+                  value={reply}
+                  onChange={(e) => setReply(e.target.value)}
+                  rows={6}
+                  placeholder="Write a reply…"
+                  className="w-full resize-y border-0 px-3 py-2 text-sm outline-none focus:ring-0"
+                />
+                <div className="border-t border-gray-100 px-3 py-2 text-sm text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <span aria-hidden>📎</span> Attach files
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 px-3 py-3">
+                  <button
+                    type="button"
+                    disabled={busy || !reply.trim()}
+                    className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    onClick={() =>
+                      run(async () => {
+                        await adminAction("reply_ticket", { ticketId: view.id, body: reply });
+                        setReply("");
+                      })
+                    }
+                  >
+                    Submit reply
+                  </button>
+                  <div className="inline-flex overflow-hidden rounded border border-gray-300">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+                      onClick={() =>
+                        run(() => adminAction("update_ticket", { ticketId: view.id, status: "closed" }))
+                      }
+                    >
+                      Close ticket
+                    </button>
+                    <select
+                      className="border-l border-gray-300 bg-white px-1 text-sm outline-none"
+                      disabled={busy}
+                      value={view.status === "open" ? "pending" : view.status}
+                      onChange={(e) =>
+                        run(() =>
+                          adminAction("update_ticket", { ticketId: view.id, status: e.target.value }),
+                        )
+                      }
+                      aria-label="Change status"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="answered">Answered</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-6 rounded border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                This ticket is closed.{" "}
+                <button
+                  type="button"
+                  className="text-blue-600 hover:underline"
+                  disabled={busy}
+                  onClick={() =>
+                    run(() => adminAction("update_ticket", { ticketId: view.id, status: "pending" }))
+                  }
+                >
+                  Reopen
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              {thread.length === 0 ? (
+                <p className="text-sm text-gray-500">No messages yet.</p>
+              ) : (
+                thread.map((m) => {
+                  const isAdmin = m.authorRole === "admin";
+                  return (
+                    <div key={m.id}>
+                      <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
+                        <span className="font-medium text-gray-800">{m.authorName}</span>
+                        <span className="text-xs text-gray-400">{fmt(m.createdAt)}</span>
+                      </div>
+                      <div className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`relative max-w-[92%] rounded px-3 py-2 text-sm leading-relaxed text-gray-900 ${
+                            isAdmin
+                              ? "bg-[#d4edda] after:absolute after:right-[-6px] after:top-3 after:border-y-[6px] after:border-l-[6px] after:border-y-transparent after:border-l-[#d4edda] after:content-['']"
+                              : "bg-[#cce5ff] after:absolute after:left-[-6px] after:top-3 after:border-y-[6px] after:border-r-[6px] after:border-y-transparent after:border-r-[#cce5ff] after:content-['']"
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap">{m.body}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <aside className="space-y-2 text-sm">
+            <Link
+              href={`/admin/users?q=${encodeURIComponent(view.username)}`}
+              className="font-medium text-blue-600 underline"
+            >
+              {view.username}
+            </Link>
+            <div>
+              <Link href="/admin/orders" className="text-blue-600 hover:underline">
+                Orders
+              </Link>
+            </div>
+            <div>
+              <Link href="/admin/payments" className="text-blue-600 hover:underline">
+                Payments
+              </Link>
+            </div>
+            <div className="pt-3 text-xs text-gray-500">
+              <p>
+                Status: <span className="capitalize text-gray-700">{statusLabel(view.status)}</span>
+              </p>
+              <p className="mt-1">
+                Assignee:{" "}
+                <select
+                  className="mt-0.5 w-full rounded border border-gray-200 px-1 py-0.5 text-xs"
+                  value={view.assignee}
+                  disabled={busy}
+                  onChange={(e) =>
+                    run(() =>
+                      adminAction("update_ticket", { ticketId: view.id, assignee: e.target.value }),
+                    )
+                  }
+                >
+                  <option value="">—</option>
+                  {staff.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -88,7 +289,7 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
         >
           Add ticket
         </button>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-3 text-sm">
           <button
             type="button"
             className={`hover:underline ${unreadOnly ? "font-semibold text-blue-600" : "text-gray-500"}`}
@@ -96,21 +297,37 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
           >
             Show unread
           </button>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search ID, user, subject…"
-            className="rounded border border-gray-300 px-3 py-1.5"
-          />
+          <div className="flex overflow-hidden rounded border border-gray-300 bg-white">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search…"
+              className="w-40 border-0 px-3 py-1.5 text-sm outline-none sm:w-52"
+            />
+            <select
+              value={searchBy}
+              onChange={(e) => setSearchBy(e.target.value as typeof searchBy)}
+              className="border-l border-gray-300 bg-gray-50 px-2 text-xs text-gray-600 outline-none"
+            >
+              <option value="id">Ticket ID</option>
+              <option value="user">User</option>
+              <option value="subject">Subject</option>
+            </select>
+          </div>
         </div>
       </div>
       {err ? <p className="mt-2 text-sm text-red-600">{err}</p> : null}
       <div className="mt-4 overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="table-admin">
           <thead>
-            <tr>
+            <tr className="bg-gray-50">
               <th>
-                <input type="checkbox" aria-label="Select all" />
+                <input
+                  type="checkbox"
+                  aria-label="Select all"
+                  checked={list.length > 0 && list.every((t) => selected.has(t.id))}
+                  onChange={(e) => toggleAll(e.target.checked)}
+                />
               </th>
               <th>ID</th>
               <th>User</th>
@@ -122,35 +339,32 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
             </tr>
           </thead>
           <tbody>
-            {list.map((t) => (
+            {list.map((t, i) => (
               <tr
                 key={t.id}
                 className={
                   t.unread
                     ? "bg-blue-900 text-white hover:bg-blue-800"
-                    : "hover:bg-gray-50"
+                    : i % 2 === 1
+                      ? "bg-gray-50 hover:bg-gray-100"
+                      : "hover:bg-gray-50"
                 }
               >
                 <td>
-                  <input type="checkbox" aria-label={`Select ${t.uid}`} />
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${t.uid}`}
+                    checked={selected.has(t.id)}
+                    onChange={(e) => toggleOne(t.id, e.target.checked)}
+                  />
                 </td>
-                <td>
-                  <button
-                    type="button"
-                    className={`font-mono font-semibold hover:underline ${
-                      t.unread ? "text-cyan-200" : "text-blue-600"
-                    }`}
-                    onClick={() => openTicket(t)}
-                  >
-                    #{t.uid}
-                  </button>
-                </td>
+                <td className="font-mono">{t.uid}</td>
                 <td className={t.unread ? "font-semibold" : undefined}>{t.username}</td>
                 <td>
                   <button
                     type="button"
                     className={`text-left hover:underline ${
-                      t.unread ? "font-semibold text-white" : "text-blue-600"
+                      t.unread ? "font-semibold text-cyan-100" : "text-blue-600"
                     }`}
                     onClick={() => openTicket(t)}
                   >
@@ -158,40 +372,9 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
                   </button>
                 </td>
                 <td>
-                  <select
-                    className={`rounded border px-1 py-0.5 text-xs capitalize ${
-                      t.unread ? "border-blue-700 bg-blue-950 text-white" : "border-gray-200"
-                    }`}
-                    value={t.status === "open" ? "pending" : t.status}
-                    disabled={busy}
-                    onChange={(e) =>
-                      run(() => adminAction("update_ticket", { ticketId: t.id, status: e.target.value }))
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="answered">Answered</option>
-                    <option value="closed">Closed</option>
-                  </select>
+                  <span className="capitalize">{statusLabel(t.status)}</span>
                 </td>
-                <td>
-                  <select
-                    className={`rounded border px-1 py-0.5 text-xs ${
-                      t.unread ? "border-blue-700 bg-blue-950 text-white" : "border-gray-200"
-                    }`}
-                    value={t.assignee}
-                    disabled={busy}
-                    onChange={(e) =>
-                      run(() => adminAction("update_ticket", { ticketId: t.id, assignee: e.target.value }))
-                    }
-                  >
-                    <option value="">—</option>
-                    {staff.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+                <td>{t.assignee || ""}</td>
                 <td className="whitespace-nowrap text-xs">{fmt(t.createdAt)}</td>
                 <td className="whitespace-nowrap text-xs">{fmt(t.updatedAt)}</td>
               </tr>
@@ -237,72 +420,20 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
           </button>
         </div>
       </Modal>
-
-      <Modal
-        title={view ? `#${view.uid} — ${view.subject}` : "Ticket"}
-        open={!!view}
-        onClose={() => setViewId(null)}
-      >
-        {view ? (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500">
-              {view.username} · <span className="capitalize">{view.status}</span> ·{" "}
-              {view.messages.length} message{view.messages.length === 1 ? "" : "s"}
-            </p>
-
-            <div className="max-h-[360px] space-y-2 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
-              {view.messages.length === 0 ? (
-                <p className="text-sm text-gray-500">No messages yet.</p>
-              ) : (
-                view.messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`rounded-lg px-3 py-2 text-sm ${
-                      m.authorRole === "admin"
-                        ? "border border-indigo-200 bg-indigo-50"
-                        : "border border-gray-200 bg-white"
-                    }`}
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      {m.authorRole}
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap text-gray-900">{m.body}</p>
-                    <p className="mt-1 text-[11px] text-gray-400">{fmt(m.createdAt)}</p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {view.status !== "closed" ? (
-              <>
-                <textarea
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                  rows={4}
-                  placeholder="Reply…"
-                  className="w-full rounded border px-3 py-1.5 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={busy || !reply.trim()}
-                  className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-                  onClick={() =>
-                    run(async () => {
-                      await adminAction("reply_ticket", { ticketId: view.id, body: reply });
-                      setReply("");
-                    })
-                  }
-                >
-                  Send reply
-                </button>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">This ticket is closed.</p>
-            )}
-          </div>
-        ) : null}
-      </Modal>
     </div>
+  );
+}
+
+function ToolbarBtn({ label, title, italic }: { label: string; title: string; italic?: boolean }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      className={`rounded px-2 py-0.5 text-xs font-semibold hover:bg-gray-100 ${italic ? "italic" : ""}`}
+      onClick={(e) => e.preventDefault()}
+    >
+      {label}
+    </button>
   );
 }
 

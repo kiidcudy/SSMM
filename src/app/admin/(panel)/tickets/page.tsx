@@ -4,6 +4,7 @@ import { TicketsAdmin } from "@/components/admin/TicketsAdmin";
 export default async function AdminTicketsPage() {
   const [tickets, users] = await Promise.all([listTickets(), listUsers()]);
   const staff = users.filter((u) => u.role === "admin").map((u) => u.username);
+  const nameById = new Map(users.map((u) => [u.id, u.username]));
 
   return (
     <TicketsAdmin
@@ -23,6 +24,10 @@ export default async function AdminTicketsPage() {
         messages: t.messages.map((m) => ({
           id: m.id,
           authorRole: m.authorRole,
+          authorName:
+            m.authorRole === "admin"
+              ? nameById.get(m.authorId) || t.assignee || "Admin"
+              : nameById.get(m.authorId) || t.username,
           body: m.body,
           createdAt: m.createdAt,
         })),
