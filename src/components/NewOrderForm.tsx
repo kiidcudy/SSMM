@@ -277,7 +277,7 @@ export function NewOrderForm({
         ) : null}
       </div>
 
-      <div ref={catRef}>
+      <div ref={catRef} className="relative z-30">
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.category}</label>
         <button
           type="button"
@@ -301,7 +301,7 @@ export function NewOrderForm({
         </button>
 
         {catOpen ? (
-          <div className="relative z-30 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
+          <div className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
             <div className="border-b border-[#243049] p-2">
               <input
                 className="input"
@@ -339,7 +339,7 @@ export function NewOrderForm({
         ) : null}
       </div>
 
-      <div ref={svcRef}>
+      <div ref={svcRef} className="relative z-20">
         <label className="mb-1 block text-sm text-[#93a0b8]">{labels.service}</label>
         <button
           type="button"
