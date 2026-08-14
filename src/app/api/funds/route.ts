@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readSession } from "@/lib/auth/session";
 import { createFundRequest, listFundsForUser, listLedger } from "@/lib/store/db";
-import { PAYMENT_METHODS } from "@/lib/site";
+import { PAYMENT_METHODS, SITE } from "@/lib/site";
+import { createCryptomusInvoice, isCryptomusConfigured } from "@/lib/payments/cryptomus";
 
 const methodSlugs = new Set(PAYMENT_METHODS.map((m) => m.slug));
 
@@ -34,11 +35,46 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+
+    const amount = Math.round(body.amount * 100) / 100;
+
+    if (body.method === "cryptomus") {
+      if (!isCryptomusConfigured()) {
+        return NextResponse.json(
+          { error: "Cryptomus is not configured yet. Please try Binance Pay or contact support." },
+          { status: 503 },
+        );
+      }
+      const row = await createFundRequest({
+        userId: session.id,
+        username: session.username,
+        method: "cryptomus",
+        amount,
+        note: body.note || "",
+        mode: "auto",
+      });
+      const base = SITE.url.replace(/\/$/, "");
+      const invoice = await createCryptomusInvoice({
+        amountUsd: amount,
+        orderId: row.id,
+        urlReturn: `${base}/dashboard/add-funds`,
+        urlSuccess: `${base}/dashboard/add-funds?paid=1`,
+        urlCallback: `${base}/api/webhooks/cryptomus`,
+      });
+      return NextResponse.json({
+        ok: true,
+        id: row.id,
+        fund: row,
+        paymentUrl: invoice.url,
+        uuid: invoice.uuid,
+      });
+    }
+
     const row = await createFundRequest({
       userId: session.id,
       username: session.username,
       method: body.method,
-      amount: Math.round(body.amount * 100) / 100,
+      amount,
       note: body.note || "",
     });
     return NextResponse.json({ ok: true, id: row.id, fund: row });

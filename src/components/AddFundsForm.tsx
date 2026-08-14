@@ -91,6 +91,30 @@ export function AddFundsForm({
         setMessage(labels.fundSubmitted.replace("{id}", id));
         return;
       }
+      if (isCryptomus) {
+        const res = await fetch("/api/funds", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method,
+            amount: amountUsd,
+            note,
+          }),
+        });
+        const data = (await res.json()) as {
+          error?: string;
+          id?: string;
+          paymentUrl?: string;
+        };
+        if (!res.ok) throw new Error(data.error || labels.requestFailed);
+        if (data.paymentUrl) {
+          window.location.assign(data.paymentUrl);
+          return;
+        }
+        setMessage(labels.fundSubmitted.replace("{id}", data.id || ""));
+        setNote("");
+        return;
+      }
       const id = await createFundRequest();
       setMessage(labels.fundSubmitted.replace("{id}", id));
       setNote("");

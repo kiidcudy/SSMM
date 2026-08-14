@@ -54,7 +54,7 @@ export function BinancePayModal({ open, onClose, usdt, refId, username, labels }
       onClick={onClose}
     >
       <div
-        className="my-6 w-full max-w-lg rounded-2xl border border-[#243049] bg-[#111827] p-6 text-[#e8eefc] shadow-2xl"
+        className="my-6 w-full max-w-xl rounded-2xl border border-[#243049] bg-[#111827] p-6 text-[#e8eefc] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -96,9 +96,9 @@ export function BinancePayModal({ open, onClose, usdt, refId, username, labels }
           <img
             src={BINANCE_PAY.qr}
             alt="Binance Pay QR"
-            width={320}
-            height={320}
-            className="mx-auto mt-4 h-64 w-64 rounded-xl bg-white object-contain p-3 sm:h-72 sm:w-72"
+            width={420}
+            height={420}
+            className="mx-auto mt-4 h-80 w-80 rounded-xl bg-white object-contain p-3 sm:h-96 sm:w-96"
           />
           <p className="mt-3 text-sm text-[#93a0b8]">
             UID: <span className="font-mono font-semibold text-[#e8eefc]">{BINANCE_PAY.id}</span>
