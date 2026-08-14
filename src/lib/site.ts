@@ -12,6 +12,8 @@ export const SITE = {
   localeDefault: "en",
   foundedYear: 2026,
   twitterHandle: "@ssmmpanel",
+  /** Google Analytics 4 measurement ID */
+  gaId: process.env.NEXT_PUBLIC_GA_ID || "G-KKPQ2JKJ8V",
 } as const;
 
 export const LOCALE_COOKIE = "ssmm_locale";
