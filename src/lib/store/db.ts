@@ -901,6 +901,8 @@ export async function replyTicket(input: {
       createdAt: now,
     });
     ticket.status = input.authorRole === "admin" ? "answered" : "open";
+    // User messages need admin attention; admin replies clear the unread flag for staff.
+    ticket.unread = input.authorRole === "user";
     ticket.updatedAt = now;
     return ticket;
   });

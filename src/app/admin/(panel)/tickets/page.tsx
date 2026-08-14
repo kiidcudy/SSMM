@@ -20,6 +20,12 @@ export default async function AdminTicketsPage() {
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
         lastMessage: t.messages[t.messages.length - 1]?.body,
+        messages: t.messages.map((m) => ({
+          id: m.id,
+          authorRole: m.authorRole,
+          body: m.body,
+          createdAt: m.createdAt,
+        })),
       }))}
     />
   );

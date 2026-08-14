@@ -1,9 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/admin/Modal";
 import { adminAction } from "@/components/admin/adminApi";
+
+export type AdminTicketMessage = {
+  id: string;
+  authorRole: string;
+  body: string;
+  createdAt: string;
+};
 
 export type AdminTicketRow = {
   id: string;
@@ -17,6 +24,7 @@ export type AdminTicketRow = {
   createdAt: string;
   updatedAt: string;
   lastMessage?: string;
+  messages: AdminTicketMessage[];
 };
 
 export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; staff: string[] }) {
@@ -24,7 +32,7 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
   const [q, setQ] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [view, setView] = useState<AdminTicketRow | null>(null);
+  const [viewId, setViewId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [form, setForm] = useState({ username: "", subject: "", body: "" });
   const [busy, setBusy] = useState(false);
@@ -43,6 +51,12 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
     );
   }, [tickets, q, unreadOnly]);
 
+  const view = viewId ? tickets.find((t) => t.id === viewId) || null : null;
+
+  useEffect(() => {
+    if (viewId && !tickets.some((t) => t.id === viewId)) setViewId(null);
+  }, [tickets, viewId]);
+
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     setErr("");
@@ -53,6 +67,14 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
       setErr(e instanceof Error ? e.message : "Failed");
     } finally {
       setBusy(false);
+    }
+  }
+
+  function openTicket(t: AdminTicketRow) {
+    setViewId(t.id);
+    setReply("");
+    if (t.unread) {
+      void run(() => adminAction("update_ticket", { ticketId: t.id, unread: false }));
     }
   }
 
@@ -74,15 +96,10 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
           >
             Show unread
           </button>
-          <select className="rounded border border-gray-300 px-2 py-1 text-xs">
-            <option>Ticket ID</option>
-            <option>User</option>
-            <option>Subject</option>
-          </select>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search"
+            placeholder="Search ID, user, subject…"
             className="rounded border border-gray-300 px-3 py-1.5"
           />
         </div>
@@ -106,27 +123,45 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
           </thead>
           <tbody>
             {list.map((t) => (
-              <tr key={t.id} className={t.unread ? "bg-orange-50/40" : undefined}>
+              <tr
+                key={t.id}
+                className={
+                  t.unread
+                    ? "bg-blue-900 text-white hover:bg-blue-800"
+                    : "hover:bg-gray-50"
+                }
+              >
                 <td>
                   <input type="checkbox" aria-label={`Select ${t.uid}`} />
                 </td>
-                <td>{t.uid}</td>
-                <td>{t.username}</td>
                 <td>
                   <button
                     type="button"
-                    className="text-left text-blue-600 hover:underline"
-                    onClick={() => {
-                      setView(t);
-                      run(() => adminAction("update_ticket", { ticketId: t.id, unread: false }));
-                    }}
+                    className={`font-mono font-semibold hover:underline ${
+                      t.unread ? "text-cyan-200" : "text-blue-600"
+                    }`}
+                    onClick={() => openTicket(t)}
+                  >
+                    #{t.uid}
+                  </button>
+                </td>
+                <td className={t.unread ? "font-semibold" : undefined}>{t.username}</td>
+                <td>
+                  <button
+                    type="button"
+                    className={`text-left hover:underline ${
+                      t.unread ? "font-semibold text-white" : "text-blue-600"
+                    }`}
+                    onClick={() => openTicket(t)}
                   >
                     {t.subject}
                   </button>
                 </td>
                 <td>
                   <select
-                    className="rounded border border-gray-200 px-1 py-0.5 text-xs capitalize"
+                    className={`rounded border px-1 py-0.5 text-xs capitalize ${
+                      t.unread ? "border-blue-700 bg-blue-950 text-white" : "border-gray-200"
+                    }`}
                     value={t.status === "open" ? "pending" : t.status}
                     disabled={busy}
                     onChange={(e) =>
@@ -140,7 +175,9 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
                 </td>
                 <td>
                   <select
-                    className="rounded border border-gray-200 px-1 py-0.5 text-xs"
+                    className={`rounded border px-1 py-0.5 text-xs ${
+                      t.unread ? "border-blue-700 bg-blue-950 text-white" : "border-gray-200"
+                    }`}
                     value={t.assignee}
                     disabled={busy}
                     onChange={(e) =>
@@ -201,33 +238,67 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
         </div>
       </Modal>
 
-      <Modal title={view ? `#${view.uid} ${view.subject}` : "Ticket"} open={!!view} onClose={() => setView(null)}>
+      <Modal
+        title={view ? `#${view.uid} — ${view.subject}` : "Ticket"}
+        open={!!view}
+        onClose={() => setViewId(null)}
+      >
         {view ? (
           <div className="space-y-3">
             <p className="text-sm text-gray-500">
-              {view.username} · {view.lastMessage || "Open to reply"}
+              {view.username} · <span className="capitalize">{view.status}</span> ·{" "}
+              {view.messages.length} message{view.messages.length === 1 ? "" : "s"}
             </p>
-            <textarea
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              rows={4}
-              placeholder="Reply…"
-              className="w-full rounded border px-3 py-1.5 text-sm"
-            />
-            <button
-              type="button"
-              disabled={busy || !reply.trim()}
-              className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-              onClick={() =>
-                run(async () => {
-                  await adminAction("reply_ticket", { ticketId: view.id, body: reply });
-                  setReply("");
-                  setView(null);
-                })
-              }
-            >
-              Send reply
-            </button>
+
+            <div className="max-h-[360px] space-y-2 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+              {view.messages.length === 0 ? (
+                <p className="text-sm text-gray-500">No messages yet.</p>
+              ) : (
+                view.messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`rounded-lg px-3 py-2 text-sm ${
+                      m.authorRole === "admin"
+                        ? "border border-indigo-200 bg-indigo-50"
+                        : "border border-gray-200 bg-white"
+                    }`}
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                      {m.authorRole}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-gray-900">{m.body}</p>
+                    <p className="mt-1 text-[11px] text-gray-400">{fmt(m.createdAt)}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {view.status !== "closed" ? (
+              <>
+                <textarea
+                  value={reply}
+                  onChange={(e) => setReply(e.target.value)}
+                  rows={4}
+                  placeholder="Reply…"
+                  className="w-full rounded border px-3 py-1.5 text-sm"
+                />
+                <button
+                  type="button"
+                  disabled={busy || !reply.trim()}
+                  className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                  onClick={() =>
+                    run(async () => {
+                      await adminAction("reply_ticket", { ticketId: view.id, body: reply });
+                      setReply("");
+                    })
+                  }
+                >
+                  Send reply
+                </button>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">This ticket is closed.</p>
+            )}
           </div>
         ) : null}
       </Modal>
