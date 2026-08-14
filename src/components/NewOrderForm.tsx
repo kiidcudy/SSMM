@@ -365,7 +365,7 @@ export function NewOrderForm({
         </button>
 
         {svcOpen ? (
-          <div className="relative z-20 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
+          <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-[#243049] bg-[#0d1422] shadow-xl">
             <div className="border-b border-[#243049] p-2">
               <input
                 className="input"
