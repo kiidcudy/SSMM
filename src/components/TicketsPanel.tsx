@@ -4,12 +4,17 @@ import { useCallback, useEffect, useState } from "react";
 
 type Ticket = {
   id: string;
+  uid?: number;
   subject: string;
   status: string;
   username?: string;
   updatedAt: string;
   messages: Array<{ id: string; authorRole: string; body: string; createdAt: string }>;
 };
+
+function ticketNo(t: Ticket): string {
+  return t.uid != null ? String(t.uid) : t.id.slice(0, 8);
+}
 
 export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -19,19 +24,21 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
   const [reply, setReply] = useState("");
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const load = useCallback(() => {
-    fetch("/api/tickets")
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed");
-        setTickets(data.tickets || []);
-      })
-      .catch((e: Error) => setError(e.message));
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tickets");
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Failed to load tickets");
+      setTickets(Array.isArray(data.tickets) ? data.tickets : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load tickets");
+    }
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   const active = tickets.find((t) => t.id === selected) || null;
@@ -40,53 +47,78 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
     e.preventDefault();
     setError("");
     setMsg("");
-    const res = await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subject, body }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Failed");
-      return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, body }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Could not open ticket");
+        return;
+      }
+      const ticket = data.ticket as Ticket;
+      setSubject("");
+      setBody("");
+      setMsg(`Ticket #${ticketNo(ticket)} opened`);
+      setSelected(ticket.id);
+      setTickets((prev) => [ticket, ...prev.filter((t) => t.id !== ticket.id)]);
+    } catch {
+      setError("Network error");
+    } finally {
+      setBusy(false);
     }
-    setSubject("");
-    setBody("");
-    setMsg("Ticket opened");
-    setSelected(data.ticket.id);
-    load();
   }
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
     if (!active) return;
     setError("");
-    const res = await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reply", ticketId: active.id, body: reply }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Failed");
-      return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reply", ticketId: active.id, body: reply }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Reply failed");
+        return;
+      }
+      setReply("");
+      const updated = data.ticket as Ticket;
+      setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    } catch {
+      setError("Network error");
+    } finally {
+      setBusy(false);
     }
-    setReply("");
-    load();
   }
 
   async function closeTicket() {
     if (!active) return;
-    await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "close", ticketId: active.id }),
-    });
-    load();
+    setBusy(true);
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "close", ticketId: active.id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ticket) {
+        const updated = data.ticket as Ticket;
+        setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
       <div className="space-y-3">
         {!isAdmin ? (
           <form onSubmit={createTicket} className="space-y-2 rounded-xl border border-[#243049] p-4">
@@ -96,6 +128,7 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
               placeholder="Subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              maxLength={160}
               required
             />
             <textarea
@@ -103,10 +136,11 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
               placeholder="Describe your issue"
               value={body}
               onChange={(e) => setBody(e.target.value)}
+              maxLength={5000}
               required
             />
-            <button type="submit" className="btn-primary w-full py-2 text-sm">
-              Open ticket
+            <button type="submit" className="btn-primary w-full py-2 text-sm" disabled={busy}>
+              {busy ? "Opening…" : "Open ticket"}
             </button>
           </form>
         ) : null}
@@ -119,13 +153,18 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
                 <li key={t.id}>
                   <button
                     type="button"
-                    onClick={() => setSelected(t.id)}
+                    onClick={() => {
+                      setSelected(t.id);
+                      setError("");
+                      setMsg("");
+                    }}
                     className={`block w-full border-b border-[#243049] px-3 py-3 text-left text-sm hover:bg-[#121a2b] ${
                       selected === t.id ? "bg-cyan-500/10" : ""
                     }`}
                   >
-                    <span className="font-medium">{t.subject}</span>
-                    <span className="mt-1 block text-xs text-[#93a0b8]">
+                    <span className="font-mono text-xs text-cyan-300">#{ticketNo(t)}</span>
+                    <span className="mt-0.5 block font-medium">{t.subject}</span>
+                    <span className="mt-1 block text-xs capitalize text-[#93a0b8]">
                       {isAdmin && t.username ? `${t.username} · ` : ""}
                       {t.status} · {new Date(t.updatedAt).toLocaleString()}
                     </span>
@@ -148,14 +187,15 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
               <div>
                 <h2 className="font-semibold">{active.subject}</h2>
                 <p className="text-xs text-[#93a0b8]">
-                  #{active.id} · {active.status}
+                  Ticket #{ticketNo(active)} · <span className="capitalize">{active.status}</span>
                 </p>
               </div>
-              {isAdmin && active.status !== "closed" ? (
+              {active.status !== "closed" ? (
                 <button
                   type="button"
-                  onClick={closeTicket}
-                  className="rounded border border-[#243049] px-3 py-1 text-xs"
+                  onClick={() => void closeTicket()}
+                  disabled={busy}
+                  className="rounded border border-[#243049] px-3 py-1 text-xs hover:bg-[#121a2b]"
                 >
                   Close
                 </button>
@@ -186,11 +226,13 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
                   placeholder="Write a reply…"
                   required
                 />
-                <button type="submit" className="btn-primary px-4 py-2 text-sm">
+                <button type="submit" className="btn-primary px-4 py-2 text-sm" disabled={busy}>
                   Send reply
                 </button>
               </form>
-            ) : null}
+            ) : (
+              <p className="text-sm text-[#93a0b8]">This ticket is closed.</p>
+            )}
           </>
         )}
       </div>
