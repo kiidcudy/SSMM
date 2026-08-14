@@ -202,7 +202,7 @@ export function TicketsPanel({ isAdmin = false }: { isAdmin?: boolean }) {
               ) : null}
             </div>
             <div className="mb-4 max-h-[360px] space-y-3 overflow-y-auto">
-              {active.messages.map((m) => (
+              {(active.messages || []).map((m) => (
                 <div
                   key={m.id}
                   className={`rounded-lg px-3 py-2 text-sm ${

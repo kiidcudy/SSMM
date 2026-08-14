@@ -193,11 +193,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, ticket });
       }
       case "update_ticket": {
-        const ticket = await updateTicketAdmin(String(body.ticketId), {
-          status: body.status as never,
-          assignee: body.assignee != null ? String(body.assignee) : undefined,
-          unread: body.unread as boolean | undefined,
-        });
+        const patch: {
+          status?: "open" | "answered" | "closed" | "pending";
+          assignee?: string;
+          unread?: boolean;
+        } = {};
+        if (body.status != null && body.status !== "") {
+          patch.status = String(body.status) as "open" | "answered" | "closed" | "pending";
+        }
+        if (body.assignee != null) patch.assignee = String(body.assignee);
+        if (typeof body.unread === "boolean") patch.unread = body.unread;
+        const ticket = await updateTicketAdmin(String(body.ticketId), patch);
         return NextResponse.json({ ok: true, ticket });
       }
       case "reply_ticket": {

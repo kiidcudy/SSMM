@@ -48,9 +48,9 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
     const s = q.trim().toLowerCase();
     if (!s) return rows;
     return rows.filter((t) => {
-      if (searchBy === "id") return String(t.uid).includes(s);
-      if (searchBy === "user") return t.username.toLowerCase().includes(s);
-      return t.subject.toLowerCase().includes(s);
+      if (searchBy === "id") return String(t.uid ?? "").includes(s);
+      if (searchBy === "user") return (t.username || "").toLowerCase().includes(s);
+      return (t.subject || "").toLowerCase().includes(s);
     });
   }, [tickets, q, unreadOnly, searchBy]);
 
@@ -95,13 +95,14 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
     });
   }
 
-  function statusLabel(status: string) {
-    if (status === "open") return "Pending";
-    return status.charAt(0).toUpperCase() + status.slice(1);
+  function statusLabel(status: string | undefined) {
+    const s = status || "pending";
+    if (s === "open") return "Pending";
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
   if (view) {
-    const thread = [...view.messages].reverse();
+    const thread = [...(view.messages || [])].reverse();
     return (
       <div>
         <button
@@ -216,9 +217,7 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
                       <div className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}>
                         <div
                           className={`relative max-w-[92%] rounded px-3 py-2 text-sm leading-relaxed text-gray-900 ${
-                            isAdmin
-                              ? "bg-[#d4edda] after:absolute after:right-[-6px] after:top-3 after:border-y-[6px] after:border-l-[6px] after:border-y-transparent after:border-l-[#d4edda] after:content-['']"
-                              : "bg-[#cce5ff] after:absolute after:left-[-6px] after:top-3 after:border-y-[6px] after:border-r-[6px] after:border-y-transparent after:border-r-[#cce5ff] after:content-['']"
+                            isAdmin ? "bg-[#d4edda]" : "bg-[#cce5ff]"
                           }`}
                         >
                           <p className="whitespace-pre-wrap">{m.body}</p>

@@ -382,6 +382,8 @@ function migrateDb(db: DbShape): DbShape {
   for (const t of db.tickets) {
     if (typeof t.uid !== "number") t.uid = ticketUid++;
     if (t.assignee == null) t.assignee = "";
+    if (!Array.isArray(t.messages)) t.messages = [];
+    if (!t.status) t.status = "pending";
     if (t.unread == null) t.unread = t.status === "open" || t.status === "pending";
   }
   db.meta.nextTicketUid = Math.max(db.meta.nextTicketUid || 500, ticketUid);
@@ -892,6 +894,7 @@ export async function replyTicket(input: {
     const ticket = db.tickets.find((t) => t.id === input.ticketId);
     if (!ticket) throw new Error("Ticket not found");
     if (ticket.status === "closed") throw new Error("Ticket closed");
+    if (!Array.isArray(ticket.messages)) ticket.messages = [];
     const now = new Date().toISOString();
     ticket.messages.push({
       id: randomBytes(4).toString("hex"),
@@ -1280,7 +1283,11 @@ export async function updateTicketAdmin(
   return modifyDb(async (db) => {
     const ticket = db.tickets.find((t) => t.id === id);
     if (!ticket) throw new Error("Ticket not found");
-    Object.assign(ticket, patch, { updatedAt: new Date().toISOString() });
+    if (patch.status !== undefined) ticket.status = patch.status;
+    if (patch.assignee !== undefined) ticket.assignee = patch.assignee;
+    if (patch.unread !== undefined) ticket.unread = patch.unread;
+    if (patch.subject !== undefined) ticket.subject = patch.subject;
+    ticket.updatedAt = new Date().toISOString();
     return ticket;
   });
 }
