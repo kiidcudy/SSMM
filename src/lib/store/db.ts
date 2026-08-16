@@ -29,6 +29,9 @@ export type StoredUser = {
   customRates?: Record<number, number>;
   /** Google OAuth subject id when signed in with Google. */
   googleId?: string;
+  /** ISO 3166-1 alpha-2 from edge geo headers (last seen on auth). */
+  countryCode?: string;
+  lastIp?: string;
 };
 
 export type OrderStatus =
@@ -595,6 +598,8 @@ export async function createUser(input: {
   username: string;
   email: string;
   password: string;
+  countryCode?: string;
+  lastIp?: string;
 }): Promise<StoredUser> {
   return modifyDb(async (db) => {
     if (db.users.some((u) => u.username.toLowerCase() === input.username.toLowerCase())) {
@@ -616,6 +621,8 @@ export async function createUser(input: {
       lastAuthAt: now,
       discountPercent: 0,
       customRates: {},
+      ...(input.countryCode ? { countryCode: input.countryCode } : {}),
+      ...(input.lastIp ? { lastIp: input.lastIp } : {}),
     };
     if (db.settings.signupBonus > 0) {
       user.balance = db.settings.signupBonus;
@@ -632,11 +639,16 @@ export async function createUser(input: {
   });
 }
 
-export async function touchAuth(userId: string) {
+export async function touchAuth(
+  userId: string,
+  opts?: { countryCode?: string; lastIp?: string },
+) {
   await modifyDb(async (db) => {
     const u = db.users.find((x) => x.id === userId);
     if (!u) return;
     u.lastAuthAt = new Date().toISOString();
+    if (opts?.countryCode) u.countryCode = opts.countryCode;
+    if (opts?.lastIp) u.lastIp = opts.lastIp;
   });
 }
 

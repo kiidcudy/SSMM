@@ -17,6 +17,7 @@ export default async function AdminUsersPage() {
         createdAt: u.createdAt,
         lastAuthAt: u.lastAuthAt,
         discountPercent: u.discountPercent,
+        countryCode: u.countryCode,
       }))}
     />
   );

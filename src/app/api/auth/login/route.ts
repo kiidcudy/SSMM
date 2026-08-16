@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { findUserByUsername, toSessionUser, touchAuth, verifyPassword } from "@/lib/store/db";
 import { createSessionToken, setSessionCookie } from "@/lib/auth/session";
+import { getRequestCountryCode } from "@/lib/geo-country";
 
 const schema = z.object({
   username: z.string().trim().min(1),
   password: z.string().min(1),
   requireAdmin: z.boolean().optional(),
 });
+
+function requestIp(headers: Headers): string | undefined {
+  const xff = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (xff) return xff;
+  return headers.get("x-real-ip")?.trim() || undefined;
+}
 
 export async function POST(req: Request) {
   try {
@@ -22,7 +29,9 @@ export async function POST(req: Request) {
     if (body.requireAdmin && user.role !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
-    await touchAuth(user.id);
+    const countryCode = getRequestCountryCode(req.headers);
+    const lastIp = requestIp(req.headers);
+    await touchAuth(user.id, { countryCode, lastIp });
     const sessionUser = toSessionUser(user);
     const token = await createSessionToken(sessionUser);
     await setSessionCookie(token);

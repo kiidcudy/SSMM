@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ActionMenu } from "@/components/admin/ActionMenu";
 import { Modal } from "@/components/admin/Modal";
 import { adminAction } from "@/components/admin/adminApi";
+import { UserCountryFlag } from "@/lib/geo-country";
 
 export type AdminUserRow = {
   id: string;
@@ -18,6 +19,7 @@ export type AdminUserRow = {
   createdAt: string;
   lastAuthAt: string;
   discountPercent: number;
+  countryCode?: string;
 };
 
 export function UsersAdmin({ users }: { users: AdminUserRow[] }) {
@@ -107,6 +109,7 @@ export function UsersAdmin({ users }: { users: AdminUserRow[] }) {
                 </td>
                 <td>{u.uid}</td>
                 <td className="font-medium">
+                  <UserCountryFlag code={u.countryCode} />
                   {u.username}
                   {u.role === "admin" ? (
                     <span className="ml-1 rounded bg-gray-100 px-1 text-[10px] text-gray-600">admin</span>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createUser, toSessionUser, touchAuth } from "@/lib/store/db";
 import { createSessionToken, setSessionCookie } from "@/lib/auth/session";
+import { getRequestCountryCode } from "@/lib/geo-country";
 
 const schema = z.object({
   username: z.string().trim().min(3).max(32),
@@ -9,11 +10,19 @@ const schema = z.object({
   password: z.string().min(6).max(128),
 });
 
+function requestIp(headers: Headers): string | undefined {
+  const xff = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (xff) return xff;
+  return headers.get("x-real-ip")?.trim() || undefined;
+}
+
 export async function POST(req: Request) {
   try {
     const body = schema.parse(await req.json());
-    const user = await createUser(body);
-    await touchAuth(user.id);
+    const countryCode = getRequestCountryCode(req.headers);
+    const lastIp = requestIp(req.headers);
+    const user = await createUser({ ...body, countryCode, lastIp });
+    await touchAuth(user.id, { countryCode, lastIp });
     const sessionUser = toSessionUser(user);
     const token = await createSessionToken(sessionUser);
     await setSessionCookie(token);

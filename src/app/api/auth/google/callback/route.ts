@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { exchangeGoogleCode, googleConfigured } from "@/lib/auth/google";
 import { findOrCreateGoogleUser, toSessionUser, touchAuth } from "@/lib/store/db";
 import { createSessionToken, setSessionCookie } from "@/lib/auth/session";
+import { getRequestCountryCode } from "@/lib/geo-country";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -32,7 +33,12 @@ export async function GET(req: Request) {
     if (user.status !== "active") {
       return errRedirect("account_suspended");
     }
-    await touchAuth(user.id);
+    const countryCode = getRequestCountryCode(req.headers);
+    const lastIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip")?.trim() ||
+      undefined;
+    await touchAuth(user.id, { countryCode, lastIp });
     const sessionUser = toSessionUser(user);
     const token = await createSessionToken(sessionUser);
     await setSessionCookie(token);
