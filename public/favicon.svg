@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="SSMM Panel">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1628"/>
+      <stop offset="55%" stop-color="#121a2b"/>
+      <stop offset="100%" stop-color="#0a1220"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#bg)" stroke="#22d3ee" stroke-width="3"/>
+  <text x="38" y="66" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="58" font-weight="800" fill="#22d3ee">S</text>
+  <rect x="62" y="58" width="6" height="12" rx="2" fill="#22d3ee" opacity="0.55"/>
+  <rect x="71" y="52" width="6" height="18" rx="2" fill="#22d3ee" opacity="0.8"/>
+  <rect x="80" y="44" width="6" height="26" rx="2" fill="#67e8f9"/>
+</svg>
