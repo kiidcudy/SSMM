@@ -11,7 +11,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   }
 
   const tickets = await listTickets();
-  const openTickets = tickets.filter((t) => t.status !== "closed").length;
+  const unreadTickets = tickets.filter((t) => Boolean(t.unread) && t.status !== "closed").length;
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] text-[#111827]">
@@ -33,7 +33,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
             </form>
           </div>
         </div>
-        <AdminNav openTickets={openTickets} />
+        <AdminNav unreadTickets={unreadTickets} />
       </header>
       <main className="mx-auto max-w-[1400px] px-4 py-5">{children}</main>
     </div>

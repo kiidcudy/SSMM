@@ -341,15 +341,27 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
             {list.map((t, i) => (
               <tr
                 key={t.id}
-                className={
+                role="button"
+                tabIndex={0}
+                onClick={() => openTicket(t)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openTicket(t);
+                  }
+                }}
+                className={`cursor-pointer ${
                   t.unread
                     ? "bg-blue-900 text-white hover:bg-blue-800"
                     : i % 2 === 1
                       ? "bg-gray-50 hover:bg-gray-100"
                       : "hover:bg-gray-50"
-                }
+                }`}
               >
-                <td>
+                <td
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     aria-label={`Select ${t.uid}`}
@@ -359,16 +371,12 @@ export function TicketsAdmin({ tickets, staff }: { tickets: AdminTicketRow[]; st
                 </td>
                 <td className="font-mono">{t.uid}</td>
                 <td className={t.unread ? "font-semibold" : undefined}>{t.username}</td>
-                <td>
-                  <button
-                    type="button"
-                    className={`text-left hover:underline ${
-                      t.unread ? "font-semibold text-cyan-100" : "text-blue-600"
-                    }`}
-                    onClick={() => openTicket(t)}
-                  >
-                    {t.subject}
-                  </button>
+                <td
+                  className={
+                    t.unread ? "font-semibold text-cyan-100" : "font-medium text-blue-600"
+                  }
+                >
+                  {t.subject}
                 </td>
                 <td>
                   <span className="capitalize">{statusLabel(t.status)}</span>

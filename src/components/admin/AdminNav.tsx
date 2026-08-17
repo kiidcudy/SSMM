@@ -17,7 +17,7 @@ const TABS = [
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export function AdminNav({ openTickets }: { openTickets: number }) {
+export function AdminNav({ unreadTickets }: { unreadTickets: number }) {
   const pathname = usePathname();
 
   return (
@@ -34,9 +34,9 @@ export function AdminNav({ openTickets }: { openTickets: number }) {
               }`}
             >
               {tab.label}
-              {tab.badge && openTickets > 0 ? (
+              {tab.badge && unreadTickets > 0 ? (
                 <span className="ml-1.5 rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {openTickets}
+                  {unreadTickets}
                 </span>
               ) : null}
             </Link>
