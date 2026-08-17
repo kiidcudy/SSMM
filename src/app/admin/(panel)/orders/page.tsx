@@ -24,6 +24,7 @@ export default async function AdminOrdersPage() {
         startCount: o.startCount,
         mode: o.mode,
         cancelReason: o.cancelReason,
+        comments: o.comments,
       }))}
     />
   );

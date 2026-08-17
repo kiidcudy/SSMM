@@ -172,6 +172,7 @@ export async function POST(req: Request) {
         charge,
         status,
         providerOrderId,
+        comments: params.comments,
       });
 
       return NextResponse.json({ order: order.id });

@@ -63,6 +63,7 @@ export type StoredOrder = {
   startCount?: number;
   mode?: "auto" | "manual";
   cancelReason?: string;
+  comments?: string;
 };
 
 export type FundRequest = {

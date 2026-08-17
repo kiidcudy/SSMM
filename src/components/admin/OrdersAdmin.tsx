@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ActionMenu } from "@/components/admin/ActionMenu";
 import { Modal } from "@/components/admin/Modal";
 import { adminAction } from "@/components/admin/adminApi";
+import { splitOrderTarget } from "@/lib/split-order-target";
 
 export type AdminOrderRow = {
   id: string;
@@ -23,6 +24,7 @@ export type AdminOrderRow = {
   startCount?: number;
   mode?: "auto" | "manual";
   cancelReason?: string;
+  comments?: string;
 };
 
 const STATUSES = [
@@ -254,16 +256,7 @@ export function OrdersAdmin({
 
       <Modal title={`Order #${detail?.id || ""}`} open={!!detail} onClose={() => setDetail(null)}>
         {detail ? (
-          <dl className="space-y-2 text-sm">
-            <Row k="User" v={detail.username} />
-            <Row k="Service" v={`${detail.serviceId} — ${detail.serviceName}`} />
-            <Row k="Link" v={detail.link} />
-            <Row k="Qty" v={String(detail.quantity)} />
-            <Row k="Charge" v={`$${detail.charge.toFixed(4)}`} />
-            <Row k="Status" v={detail.status} />
-            <Row k="Provider ID" v={detail.providerOrderId || "—"} />
-            <Row k="Cancel reason" v={detail.cancelReason || "—"} />
-          </dl>
+          <DetailBody detail={detail} />
         ) : null}
       </Modal>
 
@@ -296,6 +289,41 @@ export function OrdersAdmin({
         </div>
       </Modal>
     </div>
+  );
+}
+
+function DetailBody({ detail }: { detail: AdminOrderRow }) {
+  const linkDisplay = splitOrderTarget(detail.link ?? "").link || detail.link;
+  const commentLines = (detail.comments ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return (
+    <dl className="space-y-2 text-sm">
+      <Row k="User" v={detail.username} />
+      <Row k="Service" v={`${detail.serviceId} — ${detail.serviceName}`} />
+      <Row k="Link" v={linkDisplay} />
+      {commentLines.length > 0 ? (
+        <div className="border-b border-gray-50 pb-2">
+          <dt className="mb-1 w-28 shrink-0 text-gray-500">Comments</dt>
+          <dd>
+            <ul className="space-y-1.5">
+              {commentLines.map((comment, index) => (
+                <li key={`${index}-${comment.slice(0, 24)}`} className="break-words">
+                  {comment}
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      ) : null}
+      <Row k="Qty" v={String(detail.quantity)} />
+      <Row k="Charge" v={`$${detail.charge.toFixed(4)}`} />
+      <Row k="Status" v={detail.status} />
+      <Row k="Provider ID" v={detail.providerOrderId || "—"} />
+      <Row k="Cancel reason" v={detail.cancelReason || "—"} />
+    </dl>
   );
 }
 

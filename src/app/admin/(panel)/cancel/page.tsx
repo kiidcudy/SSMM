@@ -27,6 +27,7 @@ export default async function AdminCancelPage() {
           startCount: o.startCount,
           mode: o.mode,
           cancelReason: o.cancelReason,
+          comments: o.comments,
         }))}
       />
     </div>

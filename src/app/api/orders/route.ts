@@ -196,6 +196,7 @@ export async function POST(req: Request) {
       charge,
       status,
       providerOrderId,
+      comments: body.comments,
     });
 
     if (providerOrderId) {
