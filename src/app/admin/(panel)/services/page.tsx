@@ -26,7 +26,7 @@ export default async function AdminServicesPage() {
           id: s.id,
           category: ov.category || s.category,
           name: ov.name || s.name,
-          type: s.type || "Default",
+          type: String(s.type || "default"),
           rate: ov.rate ?? s.rate,
           min: s.min,
           max: s.max,
