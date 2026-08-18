@@ -16,6 +16,7 @@ type Labels = {
   amount: string;
   note: string;
   submitFund: string;
+  pay: string;
   submitting: string;
   contactToPay: string;
   openTicket: string;
@@ -184,9 +185,11 @@ export function AddFundsForm({
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading
                 ? labels.submitting
-                : isBinance
-                  ? labels.binanceContinue
-                  : labels.submitFund}
+                : isCryptomus
+                  ? labels.pay
+                  : isBinance
+                    ? labels.binanceContinue
+                    : labels.submitFund}
             </button>
           </>
         )}

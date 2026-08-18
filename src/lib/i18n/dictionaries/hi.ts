@@ -77,6 +77,7 @@ export const hi: Dictionary = {
     amount: "राशि ({currency})",
     note: "नोट",
     submitFund: "फंड अनुरोध भेजें",
+    pay: "Pay",
     binanceTitle: "Binance से भुगतान",
     binanceSendExact: "सटीक राशि भेजें",
     binanceSendToId: "Binance ID पर भेजें",

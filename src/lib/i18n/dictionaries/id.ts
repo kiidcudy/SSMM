@@ -77,6 +77,7 @@ export const id: Dictionary = {
     amount: "Jumlah ({currency})",
     note: "Catatan",
     submitFund: "Kirim permintaan dana",
+    pay: "Pay",
     binanceTitle: "Bayar dengan Binance",
     binanceSendExact: "Kirim jumlah yang tepat",
     binanceSendToId: "Kirim ke Binance ID",

@@ -77,6 +77,7 @@ export const bn: Dictionary = {
     amount: "পরিমাণ ({currency})",
     note: "নোট",
     submitFund: "ফান্ড রিকোয়েস্ট পাঠান",
+    pay: "Pay",
     binanceTitle: "Binance দিয়ে পেমেন্ট",
     binanceSendExact: "সঠিক পরিমাণ পাঠান",
     binanceSendToId: "Binance ID-তে পাঠান",

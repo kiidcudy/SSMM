@@ -66,6 +66,7 @@ export type Dictionary = {
     amount: string;
     note: string;
     submitFund: string;
+    pay: string;
     binanceTitle: string;
     binanceSendExact: string;
     binanceSendToId: string;

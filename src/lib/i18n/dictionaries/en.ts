@@ -77,6 +77,7 @@ export const en: Dictionary = {
     amount: "Amount ({currency})",
     note: "Note",
     submitFund: "Submit fund request",
+    pay: "Pay",
     binanceTitle: "Pay with Binance",
     binanceSendExact: "Please send the exact amount",
     binanceSendToId: "Send to Binance ID",

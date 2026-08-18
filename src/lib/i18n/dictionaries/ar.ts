@@ -77,6 +77,7 @@ export const ar: Dictionary = {
     amount: "المبلغ ({currency})",
     note: "ملاحظة",
     submitFund: "إرسال طلب الشحن",
+    pay: "Pay",
     binanceTitle: "الدفع عبر Binance",
     binanceSendExact: "يرجى إرسال المبلغ بالكامل",
     binanceSendToId: "أرسل إلى Binance ID",

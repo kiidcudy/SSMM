@@ -77,6 +77,7 @@ export const ptBr: Dictionary = {
     amount: "Valor ({currency})",
     note: "Nota",
     submitFund: "Enviar pedido de saldo",
+    pay: "Pay",
     binanceTitle: "Pagar com Binance",
     binanceSendExact: "Envie o valor exato",
     binanceSendToId: "Enviar para o Binance ID",

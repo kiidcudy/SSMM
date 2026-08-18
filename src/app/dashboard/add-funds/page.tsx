@@ -23,6 +23,7 @@ export default async function AddFundsPage() {
             amount: t.dash.amount,
             note: t.dash.note,
             submitFund: t.dash.submitFund,
+            pay: t.dash.pay,
             submitting: t.dash.submitting,
             contactToPay: t.dash.contactToPay,
             openTicket: t.dash.openTicket,

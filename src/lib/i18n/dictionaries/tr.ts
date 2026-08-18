@@ -72,6 +72,7 @@ export const tr: Dictionary = {
     amount: "Tutar ({currency})",
     note: "Not",
     submitFund: "Yükleme talebi gönder",
+    pay: "Pay",
     binanceTitle: "Binance ile Öde",
     binanceSendExact: "Lütfen tam tutarı gönderin",
     binanceSendToId: "Binance ID'ye gönder",
