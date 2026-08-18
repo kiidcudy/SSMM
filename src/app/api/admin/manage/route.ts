@@ -337,7 +337,8 @@ export async function POST(req: Request) {
             providerServiceId: mapped.providerServiceId!,
             name: mapped.name,
             category: mapped.category,
-            rate: mapped.rate,
+            rate: Number(s.rate) || 0,
+            providerCost: Number(s.rate) || 0,
             min: mapped.min,
             max: mapped.max,
             type: mapped.type,
@@ -356,7 +357,15 @@ export async function POST(req: Request) {
             category: i.category != null ? String(i.category) : undefined,
           })),
           copyDescriptions: body.copyDescriptions !== false,
+          markupPercent: body.markupPercent != null ? Number(body.markupPercent) : undefined,
+          markupFixed: body.markupFixed != null ? Number(body.markupFixed) : undefined,
+          syncRate: body.syncRate !== false,
         });
+        return NextResponse.json({ ok: true, ...result });
+      }
+      case "sync_rates": {
+        const { syncProviderRates } = await import("@/lib/store/db");
+        const result = await syncProviderRates();
         return NextResponse.json({ ok: true, ...result });
       }
       case "add_service": {

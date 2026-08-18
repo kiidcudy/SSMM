@@ -1163,7 +1163,11 @@ export async function setServiceOverride(serviceId: number, patch: ServiceOverri
     db.serviceOverrides[key] = { ...db.serviceOverrides[key], ...patch };
     const svc = db.services.find((s) => s.id === serviceId);
     if (svc) {
-      if (patch.rate != null) svc.rate = patch.rate;
+      if (patch.rate != null) {
+        svc.rate = patch.rate;
+        // Manual price edit stops auto sync for this service (won't get overwritten).
+        svc.syncRate = false;
+      }
       if (patch.name != null) svc.name = patch.name;
       if (patch.description != null) svc.description = patch.description;
       if (patch.category != null) svc.category = patch.category;
@@ -1238,13 +1242,19 @@ export async function servicesBulk(serviceIds: number[], operation: ServicesBulk
           break;
         case "set_rate":
           patch.rate = operation.rate;
-          if (svc) svc.rate = operation.rate;
+          if (svc) {
+            svc.rate = operation.rate;
+            svc.syncRate = false;
+          }
           break;
         case "multiply_rate": {
           const base = patch.rate ?? svc?.rate ?? 0;
           const next = Math.round(base * operation.factor * 10000) / 10000;
           patch.rate = next;
-          if (svc) svc.rate = next;
+          if (svc) {
+            svc.rate = next;
+            svc.syncRate = false;
+          }
           break;
         }
         case "set_category":
@@ -1423,6 +1433,9 @@ export async function importSelectedServices(input: {
   providerId: string;
   items: Array<{ providerServiceId: number; category?: string }>;
   copyDescriptions?: boolean;
+  markupPercent?: number;
+  markupFixed?: number;
+  syncRate?: boolean;
 }) {
   const { providerServices } = await import("@/lib/provider/perfectpanel");
   const { mapProviderService } = await import("@/lib/provider/sync-services");
@@ -1433,6 +1446,13 @@ export async function importSelectedServices(input: {
   const raw = await providerServices({ apiUrl: provider.apiUrl, apiKey: provider.apiKey });
   if (!Array.isArray(raw)) throw new Error("Provider services response is not an array");
   const byId = new Map(raw.map((s) => [Number(s.service), s]));
+  const markupPercent =
+    input.markupPercent != null && Number.isFinite(input.markupPercent)
+      ? input.markupPercent
+      : Number(process.env.PROVIDER_MARKUP_PERCENT || "40");
+  const markupFixed =
+    input.markupFixed != null && Number.isFinite(input.markupFixed) ? input.markupFixed : 0;
+  const syncRate = input.syncRate !== false;
 
   return modifyDb(async (db) => {
     let imported = 0;
@@ -1443,6 +1463,9 @@ export async function importSelectedServices(input: {
         category: item.category,
         providerId: provider.id,
         providerHost: provider.name,
+        markupPercent,
+        markupFixed,
+        syncRate,
       });
       if (input.copyDescriptions === false) mapped.description = "";
 
@@ -1453,7 +1476,6 @@ export async function importSelectedServices(input: {
       );
       if (existing) {
         existing.name = mapped.name;
-        existing.rate = mapped.rate;
         existing.min = mapped.min;
         existing.max = mapped.max;
         existing.type = mapped.type;
@@ -1464,6 +1486,15 @@ export async function importSelectedServices(input: {
         existing.dripfeed = mapped.dripfeed;
         existing.providerId = provider.id;
         existing.providerHost = provider.name;
+        existing.providerCost = mapped.providerCost;
+        existing.markupPercent = mapped.markupPercent;
+        existing.markupFixed = mapped.markupFixed;
+        if (existing.syncRate !== false || syncRate) {
+          existing.rate = mapped.rate;
+          existing.syncRate = syncRate;
+          const ov = db.serviceOverrides[String(existing.id)];
+          if (ov?.rate != null) delete ov.rate;
+        }
         if (input.copyDescriptions !== false) existing.description = mapped.description;
         const ov = db.serviceOverrides[String(existing.id)];
         if (ov?.deleted) delete ov.deleted;
@@ -1482,6 +1513,70 @@ export async function importSelectedServices(input: {
     clearServicesCache();
     return { imported };
   });
+}
+
+/** Pull live provider prices and refresh sell rates for syncRate services only. */
+export async function syncProviderRates() {
+  const { providerServices } = await import("@/lib/provider/perfectpanel");
+  const { applyMarkup } = await import("@/lib/provider/service-fields");
+  const providers = await listProviders();
+  const withKey = providers.filter((p) => p.apiKey);
+  let updated = 0;
+  let checked = 0;
+  const errors: string[] = [];
+
+  for (const provider of withKey) {
+    let raw: Awaited<ReturnType<typeof providerServices>>;
+    try {
+      raw = await providerServices({ apiUrl: provider.apiUrl, apiKey: provider.apiKey });
+    } catch (e) {
+      errors.push(`${provider.name}: ${e instanceof Error ? e.message : "fetch failed"}`);
+      continue;
+    }
+    if (!Array.isArray(raw)) {
+      errors.push(`${provider.name}: invalid response`);
+      continue;
+    }
+    const byId = new Map(raw.map((s) => [Number(s.service), s]));
+
+    await modifyDb(async (db) => {
+      for (const svc of db.services) {
+        if (svc.syncRate === false) continue;
+        if (!svc.providerServiceId) continue;
+        if (svc.providerId && svc.providerId !== provider.id) continue;
+        if (!svc.providerId && svc.providerHost && svc.providerHost !== provider.name) continue;
+        if (!svc.providerId && !svc.providerHost) continue;
+
+        const src = byId.get(Number(svc.providerServiceId));
+        if (!src) continue;
+        checked += 1;
+        const cost = Number(src.rate) || 0;
+        const pct = svc.markupPercent ?? Number(process.env.PROVIDER_MARKUP_PERCENT || "40");
+        const fixed = svc.markupFixed ?? 0;
+        const nextRate = applyMarkup(cost, pct, fixed);
+        const nextMin = Number(src.min) || svc.min;
+        const nextMax = Number(src.max) || svc.max;
+
+        const changed =
+          svc.providerCost !== cost ||
+          svc.rate !== nextRate ||
+          svc.min !== nextMin ||
+          svc.max !== nextMax;
+        if (!changed) continue;
+
+        svc.providerCost = cost;
+        svc.rate = nextRate;
+        svc.min = nextMin;
+        svc.max = nextMax;
+        const ov = db.serviceOverrides[String(svc.id)];
+        if (ov?.rate != null) delete ov.rate;
+        updated += 1;
+      }
+    });
+  }
+
+  clearServicesCache();
+  return { checked, updated, providers: withKey.length, errors };
 }
 
 export async function updateTicketAdmin(

@@ -30,6 +30,7 @@ type CatalogService = {
   name: string;
   category: string;
   rate: number;
+  providerCost?: number;
   min: number;
   max: number;
 };
@@ -96,6 +97,9 @@ export function ServicesAdmin({
   const [importSelected, setImportSelected] = useState<Set<number>>(new Set());
   const [copyDescriptions, setCopyDescriptions] = useState(true);
   const [hideAdded, setHideAdded] = useState(true);
+  const [markupFixed, setMarkupFixed] = useState("0");
+  const [markupPercent, setMarkupPercent] = useState("40");
+  const [syncRateOnImport, setSyncRateOnImport] = useState(true);
 
   const sortedProviders = useMemo(() => {
     return [...providers].sort((a, b) => {
@@ -249,6 +253,9 @@ export function ServicesAdmin({
     setImportSelected(new Set());
     setCopyDescriptions(true);
     setHideAdded(true);
+    setMarkupFixed("0");
+    setMarkupPercent("40");
+    setSyncRateOnImport(true);
   }
 
   function openImport() {
@@ -328,10 +335,21 @@ export function ServicesAdmin({
       await adminAction("import_services", {
         providerId: importProviderId,
         copyDescriptions,
+        markupPercent: Number(markupPercent) || 0,
+        markupFixed: Number(markupFixed) || 0,
+        syncRate: syncRateOnImport,
         items,
       });
       closeImport();
     });
+  }
+
+  function sellPreview(providerCost: number) {
+    const pct = Number(markupPercent);
+    const fixed = Number(markupFixed);
+    const safePct = Number.isFinite(pct) ? pct : 40;
+    const safeFixed = Number.isFinite(fixed) ? fixed : 0;
+    return Math.round((providerCost * (1 + safePct / 100) + safeFixed) * 100000) / 100000;
   }
 
   const bulkMenuItems: ActionMenuItem[] = [
@@ -464,12 +482,31 @@ export function ServicesAdmin({
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <SyncServicesButton />
-        <p className="mt-1 text-xs text-gray-500">
+        <button
+          type="button"
+          disabled={busy}
+          className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
+          onClick={() =>
+            run(async () => {
+              const data = (await adminAction("sync_rates")) as {
+                updated?: number;
+                checked?: number;
+              };
+              setErr("");
+              alert(
+                `Rate sync done. Checked ${data.checked ?? 0}, updated ${data.updated ?? 0}.`,
+              );
+            })
+          }
+        >
+          Sync rates now
+        </button>
+        <p className="text-xs text-gray-500">
           {providerConfigured
-            ? "Providers with API keys are managed under Settings → Providers. Import uses those panels; Sync still falls back to PROVIDER_API_* env if no DB provider is set."
-            : "Add a provider under Settings → Providers (API URL + key), or set PROVIDER_API_URL + PROVIDER_API_KEY for Sync fallback."}
+            ? "Auto rate sync runs every 15 min for services with Auto sync rates. Manual price edits turn sync off for that service."
+            : "Add a provider under Settings → Providers (API URL + key), then Import with your markup."}
         </p>
       </div>
 
@@ -863,6 +900,47 @@ export function ServicesAdmin({
               {hideAdded ? " (hiding already added)" : ""}
             </p>
 
+            <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-gray-50 px-3 py-2">
+              <label className="text-sm">
+                <span className="mb-1 block text-xs text-gray-500">Fixed</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={markupFixed}
+                  onChange={(e) => setMarkupFixed(e.target.value)}
+                  className="w-24 rounded border px-2 py-1 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-xs text-gray-500">Percent (%)</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={markupPercent}
+                  onChange={(e) => setMarkupPercent(e.target.value)}
+                  className="w-24 rounded border px-2 py-1 text-sm"
+                />
+              </label>
+              <button
+                type="button"
+                className="text-xs text-blue-600 hover:underline"
+                onClick={() => {
+                  setMarkupFixed("0");
+                  setMarkupPercent("40");
+                }}
+              >
+                Reset raise
+              </button>
+              <label className="ml-auto flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={syncRateOnImport}
+                  onChange={(e) => setSyncRateOnImport(e.target.checked)}
+                />
+                Auto sync rates
+              </label>
+            </div>
+
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
@@ -949,8 +1027,13 @@ export function ServicesAdmin({
                               />
                               <span className="min-w-0 flex-1 truncate">{s.name}</span>
                               <span className="shrink-0 text-xs text-gray-500">#{s.providerServiceId}</span>
-                              <span className="shrink-0 tabular-nums text-xs text-gray-700">
-                                {Number(s.rate).toFixed(2)}
+                              <span className="shrink-0 text-right text-xs">
+                                <span className="block font-semibold tabular-nums text-gray-900">
+                                  {sellPreview(s.providerCost ?? s.rate).toFixed(5)}
+                                </span>
+                                <span className="block tabular-nums text-gray-500">
+                                  ~{(s.providerCost ?? s.rate).toFixed(5)}
+                                </span>
                               </span>
                             </li>
                           ))}

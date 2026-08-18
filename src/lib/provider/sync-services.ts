@@ -1,12 +1,19 @@
 import { providerServices, type ProviderService } from "@/lib/provider/perfectpanel";
 import type { PanelService } from "@/lib/data/catalog";
-import { markupRate, normalizeServiceType } from "@/lib/provider/service-fields";
+import { applyMarkup, normalizeServiceType } from "@/lib/provider/service-fields";
 import { buildServiceDescription, cleanServiceName } from "@/lib/provider/service-description";
 
-export function mapProviderService(
-  s: ProviderService,
-  opts?: { category?: string; providerId?: string; providerHost?: string; localId?: number },
-): PanelService {
+export type MapProviderOpts = {
+  category?: string;
+  providerId?: string;
+  providerHost?: string;
+  localId?: number;
+  markupPercent?: number;
+  markupFixed?: number;
+  syncRate?: boolean;
+};
+
+export function mapProviderService(s: ProviderService, opts?: MapProviderOpts): PanelService {
   const providerType = s.type || "Default";
   const type = normalizeServiceType(providerType);
   const cost = Number(s.rate) || 0;
@@ -18,15 +25,25 @@ export function mapProviderService(
   const dripfeed = Boolean(s.dripfeed);
   const category = cleanServiceName(opts?.category || s.category || "Other");
   const providerServiceId = Number(s.service);
+  const markupPercent =
+    opts?.markupPercent != null && Number.isFinite(opts.markupPercent)
+      ? opts.markupPercent
+      : Number(process.env.PROVIDER_MARKUP_PERCENT || "40");
+  const markupFixed =
+    opts?.markupFixed != null && Number.isFinite(opts.markupFixed) ? opts.markupFixed : 0;
 
   return {
     id: opts?.localId ?? providerServiceId,
     providerServiceId,
     providerId: opts?.providerId,
     providerHost: opts?.providerHost,
+    providerCost: cost,
+    markupPercent,
+    markupFixed,
+    syncRate: opts?.syncRate !== false,
     category,
     name,
-    rate: markupRate(cost),
+    rate: applyMarkup(cost, markupPercent, markupFixed),
     min,
     max,
     type,

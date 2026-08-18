@@ -17,6 +17,13 @@ export type PanelService = {
   /** Stored provider row id (multi-provider import) */
   providerId?: string;
   providerHost?: string;
+  /** Raw provider cost per 1000 (before markup) */
+  providerCost?: number;
+  /** Markup applied when syncing rates */
+  markupPercent?: number;
+  markupFixed?: number;
+  /** When true, cron/auto sync updates sell rate from provider */
+  syncRate?: boolean;
   refill?: boolean;
   cancel?: boolean;
   dripfeed?: boolean;

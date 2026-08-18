@@ -137,9 +137,23 @@ export function countLines(text: string): number {
     .filter(Boolean).length;
 }
 
+/** Sell price from provider cost + percent and/or fixed raise. */
+export function applyMarkup(
+  providerRate: number,
+  percent?: number | null,
+  fixed?: number | null,
+): number {
+  const pct =
+    percent != null && Number.isFinite(Number(percent))
+      ? Number(percent)
+      : Number(process.env.PROVIDER_MARKUP_PERCENT || "40");
+  const add = fixed != null && Number.isFinite(Number(fixed)) ? Number(fixed) : 0;
+  const safePct = Number.isFinite(pct) ? pct : 40;
+  const sell = providerRate * (1 + safePct / 100) + add;
+  return Math.round(Math.max(0, sell) * 100000) / 100000;
+}
+
 /** Sell price = provider rate × (1 + margin%). Default 40%. */
 export function markupRate(providerRate: number): number {
-  const pct = Number(process.env.PROVIDER_MARKUP_PERCENT || "40");
-  const factor = 1 + (Number.isFinite(pct) ? pct : 40) / 100;
-  return Math.round(providerRate * factor * 10000) / 10000;
+  return applyMarkup(providerRate);
 }
