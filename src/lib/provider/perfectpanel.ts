@@ -1,6 +1,7 @@
 /**
- * Upstream PerfectPanel-compatible client (SMMFlare).
- * Env: PROVIDER_API_URL, PROVIDER_API_KEY
+ * Upstream PerfectPanel-compatible client (SMMFlare and similar).
+ * Default credentials: PROVIDER_API_URL, PROVIDER_API_KEY
+ * Stored providers pass explicit apiUrl + apiKey.
  */
 
 export type ProviderService = {
@@ -16,10 +17,92 @@ export type ProviderService = {
   dripfeed?: boolean;
 };
 
-type ProviderConfig = {
+export type ProviderCredentials = {
   apiUrl: string;
   apiKey: string;
 };
+
+/** Normalize panel site URL → API endpoint (…/api/v2). */
+export function resolveProviderApiUrl(input: string): string {
+  let raw = input.trim();
+  if (!raw) throw new Error("Provider URL is required");
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+  const url = new URL(raw);
+  if (!url.pathname || url.pathname === "/") {
+    url.pathname = "/api/v2";
+  }
+  return url.toString().replace(/\/$/, "");
+}
+
+export function providerDisplayName(apiUrlOrSite: string): string {
+  try {
+    const raw = /^https?:\/\//i.test(apiUrlOrSite) ? apiUrlOrSite : `https://${apiUrlOrSite}`;
+    return new URL(raw).hostname.replace(/^www\./, "");
+  } catch {
+    return apiUrlOrSite;
+  }
+}
+
+function envConfig(): ProviderCredentials | null {
+  const apiUrl = process.env.PROVIDER_API_URL?.trim();
+  const apiKey = process.env.PROVIDER_API_KEY?.trim();
+  if (!apiUrl || !apiKey || apiKey === "pending") return null;
+  return { apiUrl, apiKey };
+}
+
+export function isProviderConfigured(): boolean {
+  return Boolean(envConfig());
+}
+
+async function callWithConfig<T>(
+  cfg: ProviderCredentials,
+  action: string,
+  params: Record<string, string | number> = {},
+): Promise<T> {
+  const body = new URLSearchParams();
+  body.set("key", cfg.apiKey);
+  body.set("action", action);
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === "") continue;
+    body.set(k, String(v));
+  }
+
+  const res = await fetch(cfg.apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+    cache: "no-store",
+  });
+
+  const data = (await res.json()) as T & { error?: string };
+  if (!res.ok || (data && typeof data === "object" && "error" in data && data.error)) {
+    throw new Error(
+      typeof data === "object" && data && "error" in data
+        ? String(data.error)
+        : `Provider HTTP ${res.status}`,
+    );
+  }
+  return data;
+}
+
+async function call<T>(action: string, params: Record<string, string | number> = {}): Promise<T> {
+  const cfg = envConfig();
+  if (!cfg) throw new Error("Provider not configured");
+  return callWithConfig<T>(cfg, action, params);
+}
+
+export async function providerBalance(creds?: ProviderCredentials): Promise<number> {
+  const cfg = creds || envConfig();
+  if (!cfg) throw new Error("Provider not configured");
+  const data = await callWithConfig<{ balance: string }>(cfg, "balance");
+  return Number(data.balance);
+}
+
+export async function providerServices(creds?: ProviderCredentials): Promise<ProviderService[]> {
+  const cfg = creds || envConfig();
+  if (!cfg) throw new Error("Provider not configured");
+  return callWithConfig<ProviderService[]>(cfg, "services");
+}
 
 export type ProviderOrderParams = {
   service: number;
@@ -48,56 +131,6 @@ export type ProviderOrderParams = {
   min?: string | number;
   max?: string | number;
 };
-
-function config(): ProviderConfig | null {
-  const apiUrl = process.env.PROVIDER_API_URL?.trim();
-  const apiKey = process.env.PROVIDER_API_KEY?.trim();
-  if (!apiUrl || !apiKey || apiKey === "pending") return null;
-  return { apiUrl, apiKey };
-}
-
-export function isProviderConfigured(): boolean {
-  return Boolean(config());
-}
-
-async function call<T>(action: string, params: Record<string, string | number> = {}): Promise<T> {
-  const cfg = config();
-  if (!cfg) throw new Error("Provider not configured");
-
-  const body = new URLSearchParams();
-  body.set("key", cfg.apiKey);
-  body.set("action", action);
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null || v === "") continue;
-    body.set(k, String(v));
-  }
-
-  const res = await fetch(cfg.apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-    cache: "no-store",
-  });
-
-  const data = (await res.json()) as T & { error?: string };
-  if (!res.ok || (data && typeof data === "object" && "error" in data && data.error)) {
-    throw new Error(
-      typeof data === "object" && data && "error" in data
-        ? String(data.error)
-        : `Provider HTTP ${res.status}`,
-    );
-  }
-  return data;
-}
-
-export async function providerBalance(): Promise<number> {
-  const data = await call<{ balance: string }>("balance");
-  return Number(data.balance);
-}
-
-export async function providerServices(): Promise<ProviderService[]> {
-  return call<ProviderService[]>("services");
-}
 
 export async function providerAdd(input: ProviderOrderParams): Promise<{ order: number }> {
   const params: Record<string, string | number> = { service: input.service };

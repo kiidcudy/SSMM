@@ -3,7 +3,10 @@ import type { PanelService } from "@/lib/data/catalog";
 import { markupRate, normalizeServiceType } from "@/lib/provider/service-fields";
 import { buildServiceDescription, cleanServiceName } from "@/lib/provider/service-description";
 
-export function mapProviderService(s: ProviderService): PanelService {
+export function mapProviderService(
+  s: ProviderService,
+  opts?: { category?: string; providerId?: string; providerHost?: string; localId?: number },
+): PanelService {
   const providerType = s.type || "Default";
   const type = normalizeServiceType(providerType);
   const cost = Number(s.rate) || 0;
@@ -13,11 +16,15 @@ export function mapProviderService(s: ProviderService): PanelService {
   const refill = Boolean(s.refill);
   const cancel = Boolean(s.cancel);
   const dripfeed = Boolean(s.dripfeed);
+  const category = cleanServiceName(opts?.category || s.category || "Other");
+  const providerServiceId = Number(s.service);
 
   return {
-    id: Number(s.service),
-    providerServiceId: Number(s.service),
-    category: cleanServiceName(s.category || "Other"),
+    id: opts?.localId ?? providerServiceId,
+    providerServiceId,
+    providerId: opts?.providerId,
+    providerHost: opts?.providerHost,
+    category,
     name,
     rate: markupRate(cost),
     min,
@@ -26,7 +33,7 @@ export function mapProviderService(s: ProviderService): PanelService {
     providerType,
     description: buildServiceDescription({
       name,
-      category: s.category || "Other",
+      category: opts?.category || s.category || "Other",
       type: providerType,
       min,
       max,
@@ -43,5 +50,5 @@ export function mapProviderService(s: ProviderService): PanelService {
 export async function fetchMappedProviderServices(): Promise<PanelService[]> {
   const raw = await providerServices();
   if (!Array.isArray(raw)) throw new Error("Provider services response is not an array");
-  return raw.map(mapProviderService);
+  return raw.map((s) => mapProviderService(s));
 }

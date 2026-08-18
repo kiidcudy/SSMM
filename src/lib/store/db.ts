@@ -3,8 +3,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import { get, put } from "@vercel/blob";
 import { type PanelService } from "@/lib/data/catalog";
-import { isProviderConfigured } from "@/lib/provider/perfectpanel";
-import { fetchMappedProviderServices } from "@/lib/provider/sync-services";
 
 const BLOB_DB_PATH = "ssmm/db.json";
 
@@ -118,6 +116,18 @@ export type ChildPanel = {
   note: string;
 };
 
+/** External SMM panel API connection (Settings → Providers). */
+export type StoredProvider = {
+  id: string;
+  name: string;
+  url: string;
+  apiUrl: string;
+  apiKey: string;
+  alias: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ServiceOverride = {
   enabled?: boolean;
   hidden?: boolean;
@@ -179,6 +189,7 @@ type DbMeta = {
   nextUserUid: number;
   nextPaymentId: number;
   nextTicketUid: number;
+  nextLocalServiceId: number;
 };
 
 type DbShape = {
@@ -194,6 +205,8 @@ type DbShape = {
   appearance: AppearanceSettings;
   affiliates: AffiliateRow[];
   childPanels: ChildPanel[];
+  providers: StoredProvider[];
+  categories: string[];
   serviceOverrides: Record<string, ServiceOverride>;
 };
 
@@ -224,6 +237,7 @@ function defaultMeta(): DbMeta {
     nextUserUid: 900,
     nextPaymentId: 100,
     nextTicketUid: 500,
+    nextLocalServiceId: 900000,
   };
 }
 
@@ -353,6 +367,8 @@ function emptyDb(): DbShape {
     appearance: defaultAppearance(),
     affiliates: [],
     childPanels: [],
+    providers: [],
+    categories: [],
     serviceOverrides: {},
   };
 }
@@ -367,10 +383,20 @@ function migrateDb(db: DbShape): DbShape {
   if (!Array.isArray(db.users)) db.users = [];
   if (!Array.isArray(db.affiliates)) db.affiliates = [];
   if (!Array.isArray(db.childPanels)) db.childPanels = [];
+  if (!Array.isArray(db.providers)) db.providers = [];
+  if (!Array.isArray(db.categories)) db.categories = [];
   if (!db.settings) db.settings = defaultSettings();
   if (!db.appearance) db.appearance = defaultAppearance();
   if (!db.serviceOverrides || typeof db.serviceOverrides !== "object") db.serviceOverrides = {};
   if (!db.meta) db.meta = defaultMeta();
+  if (!db.meta.nextLocalServiceId) db.meta.nextLocalServiceId = 900000;
+
+  // Keep category list in sync with services already stored.
+  const catSet = new Set(db.categories.map((c) => c.trim()).filter(Boolean));
+  for (const s of db.services) {
+    if (s.category?.trim()) catSet.add(s.category.trim());
+  }
+  db.categories = [...catSet].sort((a, b) => a.localeCompare(b));
 
   let uidCursor = db.meta.nextUserUid || 900;
   for (const u of db.users) {
@@ -719,23 +745,7 @@ function applyServiceOverrides(
 }
 
 export async function listServices() {
-  if (isProviderConfigured()) {
-    if (servicesCache && Date.now() - servicesCache.at < SERVICES_TTL_MS) {
-      const overrides = (await ensureDb()).serviceOverrides || {};
-      return applyServiceOverrides(servicesCache.items, overrides);
-    }
-    try {
-      const items = await fetchMappedProviderServices();
-      servicesCache = { at: Date.now(), items };
-      await modifyDb(async (db) => {
-        db.services = items;
-      });
-      const overrides = (await ensureDb()).serviceOverrides || {};
-      return applyServiceOverrides(items, overrides);
-    } catch {
-      // fall back to last stored catalog
-    }
-  }
+  // Catalog is local DB (selective import / manual add). Env sync is opt-in via Sync button.
   const db = await ensureDb();
   return applyServiceOverrides(db.services, db.serviceOverrides || {});
 }
@@ -1289,6 +1299,191 @@ export async function duplicateService(serviceId: number) {
   });
 }
 
+export async function listCategories() {
+  const db = await ensureDb();
+  return [...db.categories];
+}
+
+export async function createCategory(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Category name is required");
+  return modifyDb(async (db) => {
+    if (!db.categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      db.categories.push(trimmed);
+      db.categories.sort((a, b) => a.localeCompare(b));
+    }
+    return trimmed;
+  });
+}
+
+export async function listProviders(): Promise<StoredProvider[]> {
+  const db = await ensureDb();
+  return db.providers.map((p) => ({ ...p }));
+}
+
+export async function getProvider(id: string) {
+  const db = await ensureDb();
+  return db.providers.find((p) => p.id === id) ?? null;
+}
+
+export async function addProvider(input: { url: string; apiKey?: string }) {
+  const { resolveProviderApiUrl, providerDisplayName } = await import("@/lib/provider/perfectpanel");
+  const apiUrl = resolveProviderApiUrl(input.url);
+  const name = providerDisplayName(input.url);
+  const now = new Date().toISOString();
+  return modifyDb(async (db) => {
+    const existing = db.providers.find((p) => p.apiUrl === apiUrl || p.name === name);
+    if (existing) {
+      if (input.apiKey != null && input.apiKey !== "") existing.apiKey = input.apiKey.trim();
+      existing.url = input.url.trim();
+      existing.apiUrl = apiUrl;
+      existing.updatedAt = now;
+      return existing;
+    }
+    const row: StoredProvider = {
+      id: randomBytes(6).toString("hex"),
+      name,
+      url: input.url.trim(),
+      apiUrl,
+      apiKey: (input.apiKey || "").trim(),
+      alias: "",
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.providers.push(row);
+    return row;
+  });
+}
+
+export async function updateProvider(
+  id: string,
+  patch: Partial<Pick<StoredProvider, "apiKey" | "alias" | "url">>,
+) {
+  const { resolveProviderApiUrl, providerDisplayName } = await import("@/lib/provider/perfectpanel");
+  return modifyDb(async (db) => {
+    const row = db.providers.find((p) => p.id === id);
+    if (!row) throw new Error("Provider not found");
+    if (patch.url != null && patch.url.trim()) {
+      row.url = patch.url.trim();
+      row.apiUrl = resolveProviderApiUrl(patch.url);
+      row.name = providerDisplayName(patch.url);
+    }
+    if (patch.apiKey != null) row.apiKey = patch.apiKey.trim();
+    if (patch.alias != null) row.alias = patch.alias;
+    row.updatedAt = new Date().toISOString();
+    return row;
+  });
+}
+
+export async function deleteProvider(id: string) {
+  return modifyDb(async (db) => {
+    db.providers = db.providers.filter((p) => p.id !== id);
+  });
+}
+
+export async function createManualService(input: {
+  name: string;
+  category: string;
+  rate: number;
+  min: number;
+  max: number;
+  description?: string;
+  type?: PanelService["type"];
+  dripfeed?: boolean;
+  cancel?: boolean;
+}) {
+  return modifyDb(async (db) => {
+    if (!db.meta.nextLocalServiceId) db.meta.nextLocalServiceId = 900000;
+    const id = db.meta.nextLocalServiceId++;
+    const category = input.category.trim() || "Other";
+    const row: PanelService = {
+      id,
+      name: input.name.trim(),
+      category,
+      rate: Number(input.rate) || 0,
+      min: Math.max(1, Number(input.min) || 1),
+      max: Math.max(1, Number(input.max) || 1),
+      type: input.type || "default",
+      providerType: input.type || "Default",
+      description: (input.description || "").trim(),
+      dripfeed: Boolean(input.dripfeed),
+      cancel: Boolean(input.cancel),
+    };
+    db.services.push(row);
+    if (!db.categories.some((c) => c.toLowerCase() === category.toLowerCase())) {
+      db.categories.push(category);
+      db.categories.sort((a, b) => a.localeCompare(b));
+    }
+    clearServicesCache();
+    return row;
+  });
+}
+
+export async function importSelectedServices(input: {
+  providerId: string;
+  items: Array<{ providerServiceId: number; category?: string }>;
+  copyDescriptions?: boolean;
+}) {
+  const { providerServices } = await import("@/lib/provider/perfectpanel");
+  const { mapProviderService } = await import("@/lib/provider/sync-services");
+  const provider = await getProvider(input.providerId);
+  if (!provider) throw new Error("Provider not found");
+  if (!provider.apiKey) throw new Error("Provider API key is missing — edit the provider first");
+
+  const raw = await providerServices({ apiUrl: provider.apiUrl, apiKey: provider.apiKey });
+  if (!Array.isArray(raw)) throw new Error("Provider services response is not an array");
+  const byId = new Map(raw.map((s) => [Number(s.service), s]));
+
+  return modifyDb(async (db) => {
+    let imported = 0;
+    for (const item of input.items) {
+      const src = byId.get(Number(item.providerServiceId));
+      if (!src) continue;
+      const mapped = mapProviderService(src, {
+        category: item.category,
+        providerId: provider.id,
+        providerHost: provider.name,
+      });
+      if (input.copyDescriptions === false) mapped.description = "";
+
+      const existing = db.services.find(
+        (s) =>
+          s.providerServiceId === mapped.providerServiceId &&
+          (s.providerId === provider.id || (!s.providerId && s.providerHost === provider.name)),
+      );
+      if (existing) {
+        existing.name = mapped.name;
+        existing.rate = mapped.rate;
+        existing.min = mapped.min;
+        existing.max = mapped.max;
+        existing.type = mapped.type;
+        existing.providerType = mapped.providerType;
+        existing.category = mapped.category;
+        existing.refill = mapped.refill;
+        existing.cancel = mapped.cancel;
+        existing.dripfeed = mapped.dripfeed;
+        existing.providerId = provider.id;
+        existing.providerHost = provider.name;
+        if (input.copyDescriptions !== false) existing.description = mapped.description;
+        const ov = db.serviceOverrides[String(existing.id)];
+        if (ov?.deleted) delete ov.deleted;
+      } else {
+        const maxId = db.services.reduce((m, s) => Math.max(m, s.id), 0);
+        const collision = db.services.some((s) => s.id === mapped.id);
+        mapped.id = collision ? maxId + 1 : mapped.id;
+        db.services.push(mapped);
+      }
+      if (mapped.category && !db.categories.some((c) => c.toLowerCase() === mapped.category.toLowerCase())) {
+        db.categories.push(mapped.category);
+      }
+      imported += 1;
+    }
+    db.categories.sort((a, b) => a.localeCompare(b));
+    clearServicesCache();
+    return { imported };
+  });
+}
+
 export async function updateTicketAdmin(
   id: string,
   patch: Partial<Pick<StoredTicket, "status" | "assignee" | "unread" | "subject">>,
@@ -1315,6 +1510,8 @@ export async function getDbSnapshot() {
     tickets: db.tickets,
     affiliates: db.affiliates,
     childPanels: db.childPanels,
+    providers: db.providers,
+    categories: db.categories,
     settings: db.settings,
     appearance: db.appearance,
     serviceOverrides: db.serviceOverrides,

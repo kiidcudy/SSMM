@@ -6,7 +6,10 @@ export async function adminAction(action: string, payload: Record<string, unknow
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, ...payload }),
   });
-  const data = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown> & {
+    error?: string;
+    ok?: boolean;
+  };
   if (!res.ok) throw new Error(data.error || "Request failed");
   return data;
 }

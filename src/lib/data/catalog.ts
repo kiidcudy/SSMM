@@ -14,6 +14,9 @@ export type PanelService = {
   providerType: string;
   description: string;
   providerServiceId?: number;
+  /** Stored provider row id (multi-provider import) */
+  providerId?: string;
+  providerHost?: string;
   refill?: boolean;
   cancel?: boolean;
   dripfeed?: boolean;

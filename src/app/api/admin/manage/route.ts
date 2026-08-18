@@ -3,17 +3,25 @@ import { requireAdmin } from "@/lib/auth/admin";
 import {
   adminAddPayment,
   adminUpdateUser,
+  addProvider,
+  createCategory,
+  createManualService,
   createTicket,
   createUser,
   deleteChildPanel,
+  deleteProvider,
   deleteServiceLocal,
   duplicateService,
+  getProvider,
+  importSelectedServices,
+  listProviders,
   replyTicket,
   setServiceOverride,
   servicesBulk,
   updateAppearance,
   updateOrder,
   updatePanelSettings,
+  updateProvider,
   updateTicketAdmin,
   upsertAffiliate,
   upsertChildPanel,
@@ -22,6 +30,8 @@ import {
   findUserByUsername,
   getOrder,
 } from "@/lib/store/db";
+import { providerBalance, providerServices } from "@/lib/provider/perfectpanel";
+import { mapProviderService } from "@/lib/provider/sync-services";
 
 type Body = {
   action: string;
@@ -258,6 +268,109 @@ export async function POST(req: Request) {
           homepageHtml: body.homepageHtml != null ? String(body.homepageHtml) : undefined,
         });
         return NextResponse.json({ ok: true, appearance });
+      }
+      case "create_category": {
+        const name = await createCategory(String(body.name || ""));
+        return NextResponse.json({ ok: true, name });
+      }
+      case "add_provider": {
+        const provider = await addProvider({
+          url: String(body.url || ""),
+          apiKey: body.apiKey != null ? String(body.apiKey) : undefined,
+        });
+        return NextResponse.json({
+          ok: true,
+          provider: { ...provider, apiKey: provider.apiKey ? "••••" : "" },
+        });
+      }
+      case "update_provider": {
+        const provider = await updateProvider(String(body.providerId || body.id), {
+          url: body.url != null ? String(body.url) : undefined,
+          apiKey: body.apiKey != null ? String(body.apiKey) : undefined,
+          alias: body.alias != null ? String(body.alias) : undefined,
+        });
+        return NextResponse.json({
+          ok: true,
+          provider: { ...provider, apiKey: provider.apiKey ? "••••" : "" },
+        });
+      }
+      case "delete_provider": {
+        await deleteProvider(String(body.providerId || body.id));
+        return NextResponse.json({ ok: true });
+      }
+      case "list_providers": {
+        const providers = await listProviders();
+        return NextResponse.json({
+          ok: true,
+          providers: providers.map((p) => ({
+            id: p.id,
+            name: p.name,
+            url: p.url,
+            apiUrl: p.apiUrl,
+            alias: p.alias,
+            hasKey: Boolean(p.apiKey),
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+          })),
+        });
+      }
+      case "provider_balance": {
+        const provider = await getProvider(String(body.providerId));
+        if (!provider) return NextResponse.json({ error: "Provider not found" }, { status: 404 });
+        if (!provider.apiKey) return NextResponse.json({ error: "API key missing" }, { status: 400 });
+        const balance = await providerBalance({ apiUrl: provider.apiUrl, apiKey: provider.apiKey });
+        return NextResponse.json({ ok: true, balance });
+      }
+      case "provider_services": {
+        const provider = await getProvider(String(body.providerId));
+        if (!provider) return NextResponse.json({ error: "Provider not found" }, { status: 404 });
+        if (!provider.apiKey) {
+          return NextResponse.json({ error: "API key missing — edit provider first" }, { status: 400 });
+        }
+        const raw = await providerServices({ apiUrl: provider.apiUrl, apiKey: provider.apiKey });
+        if (!Array.isArray(raw)) {
+          return NextResponse.json({ error: "Invalid provider response" }, { status: 400 });
+        }
+        const services = raw.map((s) => {
+          const mapped = mapProviderService(s, { providerId: provider.id, providerHost: provider.name });
+          return {
+            providerServiceId: mapped.providerServiceId!,
+            name: mapped.name,
+            category: mapped.category,
+            rate: mapped.rate,
+            min: mapped.min,
+            max: mapped.max,
+            type: mapped.type,
+          };
+        });
+        return NextResponse.json({ ok: true, services, providerName: provider.name });
+      }
+      case "import_services": {
+        const items = Array.isArray(body.items)
+          ? (body.items as Array<{ providerServiceId: number; category?: string }>)
+          : [];
+        const result = await importSelectedServices({
+          providerId: String(body.providerId),
+          items: items.map((i) => ({
+            providerServiceId: Number(i.providerServiceId),
+            category: i.category != null ? String(i.category) : undefined,
+          })),
+          copyDescriptions: body.copyDescriptions !== false,
+        });
+        return NextResponse.json({ ok: true, ...result });
+      }
+      case "add_service": {
+        const service = await createManualService({
+          name: String(body.name || ""),
+          category: String(body.category || "Other"),
+          rate: Number(body.rate) || 0,
+          min: Number(body.min) || 1,
+          max: Number(body.max) || 1,
+          description: body.description != null ? String(body.description) : undefined,
+          dripfeed: Boolean(body.dripfeed),
+          cancel: Boolean(body.cancel),
+        });
+        return NextResponse.json({ ok: true, service });
       }
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
