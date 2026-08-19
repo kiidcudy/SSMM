@@ -219,4 +219,46 @@ export const posts: Record<string, BlogPost> = {
       }
     ]
   }),
+  "tiktok-growth-smm-panel-guide-2026": assemblePost(base("tiktok-growth-smm-panel-guide-2026"), {
+    "title": "Panduan Panel SMM TikTok 2026: Followers, Views & Realitas FYP",
+    "metaTitle": "Panel SMM TikTok 2026: Followers & Views | SSMM",
+    "metaDescription": "Gunakan panel SMM TikTok dengan benar: followers untuk bukti profil, views/likes untuk cold start, drip-feed, dan ekspektasi FYP jujur.",
+    "focusKeyword": "panel smm tiktok",
+    "keywords": ["panel smm tiktok","beli followers tiktok","views tiktok panel","ssmmpanel.com"],
+    "excerpt": "Playbook 2026 — followers, views/likes, drip-feed, FYP tanpa ilusi.",
+    "takeaway": "Panel TikTok terbaik saat tiap layanan punya peran jelas. Tempo pelan, tanpa password.",
+    "imageAlt": "Sampul panduan pertumbuhan panel SMM TikTok 2026",
+    "imageAlt2": "Diagram mix layanan TikTok mingguan",
+    "contentHtml": "<p><strong>Panel SMM TikTok</strong> adalah dashboard operator untuk memesan followers, views, likes, dan engagement hanya dengan link publik. Di 2026 TikTok masih menghargai watch time, replay, dan save — tapi optik cold start penting. Panduan ini menjelaskan layanan mana yang dibeli, drip-feed, dan kebiasaan posting tanpa tipu diri soal For You Page.</p>\n<p>SSMM Panel punya TikTok di <a href=\"/services\">services</a> dan <a href=\"/free-services\">free services</a>. Baca <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">apa itu panel SMM</a> dan bandingkan <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">panduan Instagram</a>.</p>\n<img src=\"/blog/smm-panel-beginners-cover.png\" alt=\"Sampul panduan pertumbuhan panel SMM TikTok 2026\" />\n<h2>Apa bisa dan tidak bisa panel TikTok</h2>\n<p>Panel menaikkan angka visible dan membuat video terlihat aktif di jam pertama. Tidak bisa menciptakan hook atau memperbaiki retensi buruk. FYP bukan otomatis — watch time dan replay yang menentukan. Aturan password: hanya URL publik.</p>\n<h2>Followers: bukti profil</h2>\n<p>Followers membuat profil terlihat hidup. Akun baru: drip pelan, jumlah modest. Publikasikan konten dulu. <a href=\"/blog/how-to-place-your-first-smm-panel-order\">Pesanan pertama</a>.</p>\n<h2>Views: hangatkan counter</h2>\n<p>Views membantu cold start. Bukan pengganti watch time. Perbaiki hook di frame pertama. Catat log video: waktu publish, ukuran order, retensi 24 jam.</p>\n<h2>Likes: timing</h2>\n<p>Likes untuk URL video spesifik. Pesan segera setelah publish. <a href=\"/services\">services</a>.</p>\n<img src=\"/blog/smm-panel-beginners-mid.png\" alt=\"Diagram mix layanan TikTok mingguan\" />\n<h2>Drip-feed & partial</h2>\n<p>Drip-feed untuk akun muda. Partial mengembalikan saldo. <a href=\"/faq\">FAQ</a> lalu <a href=\"/contact\">contact</a>. <a href=\"/api-docs\">API docs</a>.</p>\n<h2>Mix mingguan</h2>\n<table><thead><tr><th>Tugas</th><th>Utama</th><th>Sekunder</th><th>Catatan</th></tr></thead><tbody><tr><td>Profil kosong</td><td>Followers drip</td><td>—</td><td>Konten dulu</td></tr><tr><td>Video cold start</td><td>Views</td><td>Likes</td><td>Perbaiki hook</td></tr><tr><td>Drop produk</td><td>Views+likes</td><td>Shares</td><td>Offer jelas</td></tr><tr><td>QA panel</td><td>Gratis</td><td>Bayar kecil</td><td><a href=\"/free-services\">free services</a></td></tr></tbody></table>\n<h2>Gratis vs berbayar</h2>\n<p>Gratis uji format link. <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">gratis vs berbayar</a>. <a href=\"/payments\">payments</a>. PayPal: <a href=\"/blog/paypal-smm-panel-how-to-add-funds\">panduan</a>.</p>\n<h2>Kebiasaan konten & anggaran</h2>\n<p>Bio jelas, satu CTA, balas komentar awal. Bagi anggaran test/scale.</p>\n<h2>Sprint dua minggu</h2>\n<p>Minggu 1: profil, 4 video, <a href=\"/free-services\">trial gratis</a>. Minggu 2: views+likes, drip followers, <a href=\"/payments\">/payments</a>.</p>\n<p><a href=\"/signup\">Buat akun</a> · <a href=\"/services\">services</a> · <a href=\"/blog/free-smm-services-vs-paid-when-to-upgrade\">gratis vs berbayar</a> · <a href=\"/blog/how-to-place-your-first-smm-panel-order\">pesanan pertama</a> · <a href=\"/blog/instagram-smm-panel-followers-likes-reels\">Instagram</a> · <a href=\"/blog/what-is-an-smm-panel-beginners-guide-2026\">pemula</a>. Konten, ukur, lalu pesan.</p>",
+    "faq": [
+      {
+        "q": "Apa itu panel SMM TikTok?",
+        "a": "Dashboard pesan followers, views, likes dengan link publik."
+      },
+      {
+        "q": "Followers atau views dulu?",
+        "a": "Profil kosong: drip followers. Video kuat: views + likes."
+      },
+      {
+        "q": "Minta password?",
+        "a": "Tidak. Hanya URL publik."
+      },
+      {
+        "q": "Views jamin FYP?",
+        "a": "Tidak. Retensi dan replay yang menentukan."
+      },
+      {
+        "q": "Kapan drip-feed?",
+        "a": "Akun baru atau niche sensitif."
+      },
+      {
+        "q": "Tes gratis?",
+        "a": "Ya, di free services."
+      },
+      {
+        "q": "Bedanya dengan Instagram?",
+        "a": "TikTok lebih bergantung watch time per upload."
+      }
+    ]
+  }),
 };
