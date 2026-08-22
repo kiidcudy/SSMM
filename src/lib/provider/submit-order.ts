@@ -1,9 +1,11 @@
 import type { PanelService } from "@/lib/data/catalog";
-import type { StoredOrder } from "@/lib/store/db";
+import type { StoredOrder, StoredProvider } from "@/lib/store/db";
 import { getProvider, listProviders } from "@/lib/store/db";
+import { splitOrderTarget } from "@/lib/split-order-target";
 import { fieldsForService } from "@/lib/provider/service-fields";
 import {
   providerAddWithConfig,
+  resolveProviderApiUrl,
   resolveProviderCredentials,
   type ProviderCredentials,
   type ProviderOrderParams,
@@ -38,24 +40,50 @@ export type SubmitProviderResult =
   | { ok: true; providerOrderId: string }
   | { ok: false; error: string };
 
+function normalizeCreds(creds: ProviderCredentials): ProviderCredentials {
+  return {
+    apiUrl: resolveProviderApiUrl(creds.apiUrl),
+    apiKey: creds.apiKey.trim(),
+  };
+}
+
+function providerMatchesHost(provider: StoredProvider, host: string): boolean {
+  const needle = host.toLowerCase().replace(/^www\./, "");
+  const name = provider.name.toLowerCase().replace(/^www\./, "");
+  const url = provider.url.toLowerCase();
+  const apiUrl = provider.apiUrl.toLowerCase();
+  return name === needle || url.includes(needle) || apiUrl.includes(needle);
+}
+
 export async function resolveProviderCredentialsForService(
   service: PanelService,
 ): Promise<ProviderCredentials | null> {
+  const providers = await listProviders();
+  const withKey = providers.filter((p) => p.apiKey);
+
   if (service.providerId) {
-    const linked = await getProvider(service.providerId);
-    if (linked?.apiKey) {
-      return { apiUrl: linked.apiUrl, apiKey: linked.apiKey };
-    }
+    const linked = withKey.find((p) => p.id === service.providerId) || (await getProvider(service.providerId));
+    if (linked?.apiKey) return normalizeCreds({ apiUrl: linked.apiUrl, apiKey: linked.apiKey });
+  }
+
+  if (service.providerHost) {
+    const hostMatch = withKey.find((p) => providerMatchesHost(p, service.providerHost!));
+    if (hostMatch) return normalizeCreds({ apiUrl: hostMatch.apiUrl, apiKey: hostMatch.apiKey });
+  }
+
+  if (withKey.length === 1) {
+    const only = withKey[0]!;
+    return normalizeCreds({ apiUrl: only.apiUrl, apiKey: only.apiKey });
+  }
+
+  if (withKey.length > 1) {
+    const smm = withKey.find((p) => providerMatchesHost(p, "smmflare.com"));
+    if (smm) return normalizeCreds({ apiUrl: smm.apiUrl, apiKey: smm.apiKey });
+    return normalizeCreds({ apiUrl: withKey[0]!.apiUrl, apiKey: withKey[0]!.apiKey });
   }
 
   const env = resolveProviderCredentials();
-  if (env) return env;
-
-  const providers = await listProviders();
-  const fallback = providers.find((p) => p.apiKey);
-  if (fallback) {
-    return { apiUrl: fallback.apiUrl, apiKey: fallback.apiKey };
-  }
+  if (env) return normalizeCreds(env);
 
   return null;
 }
@@ -65,8 +93,17 @@ export async function resolveProviderCredentialsForOrder(
   services: PanelService[],
 ): Promise<ProviderCredentials | null> {
   const service = services.find((s) => s.id === order.serviceId);
-  if (!service) return resolveProviderCredentials() ?? null;
+  if (!service) {
+    const env = resolveProviderCredentials();
+    return env ? normalizeCreds(env) : null;
+  }
   return resolveProviderCredentialsForService(service);
+}
+
+function cleanProviderLink(raw?: string): string | undefined {
+  const text = splitOrderTarget(raw ?? "").link || raw || "";
+  const trimmed = text.trim();
+  return trimmed || undefined;
 }
 
 export async function submitOrderToProvider(
@@ -75,14 +112,26 @@ export async function submitOrderToProvider(
 ): Promise<SubmitProviderResult> {
   const creds = await resolveProviderCredentialsForService(service);
   if (!creds) {
-    return { ok: false, error: "Provider not configured" };
+    return {
+      ok: false,
+      error: "Provider not configured — add SMMFlare under Settings → Providers with API key",
+    };
   }
 
   const fields = fieldsForService(service);
   const providerServiceId = service.providerServiceId ?? service.id;
+  if (!providerServiceId) {
+    return { ok: false, error: "Service is missing provider mapping (providerServiceId)" };
+  }
+
+  const link = cleanProviderLink(input.link);
+  if (fields.needsLink && !link) {
+    return { ok: false, error: "Link required" };
+  }
+
   const params: ProviderOrderParams = {
     service: providerServiceId,
-    link: input.link,
+    link,
     quantity: fields.needsQuantity || fields.quantityFromComments ? input.quantity : undefined,
     comments: input.comments,
     keywords: input.keywords,

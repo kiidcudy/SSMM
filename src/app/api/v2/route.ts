@@ -197,6 +197,7 @@ export async function POST(req: Request) {
         status,
         providerOrderId,
         providerError,
+        mode: providerOrderId ? "auto" : "manual",
         comments: params.comments,
         source: "api",
       });

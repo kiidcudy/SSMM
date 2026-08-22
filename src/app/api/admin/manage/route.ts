@@ -14,6 +14,7 @@ import {
   duplicateService,
   getProvider,
   importSelectedServices,
+  listOrders,
   listProviders,
   listServices,
   replyTicket,
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
           comments: order.comments,
         });
         if (!result.ok) {
-          await updateOrder(order.id, { providerError: result.error });
+          await updateOrder(order.id, { providerError: result.error, mode: "manual" });
           return NextResponse.json({ error: result.error }, { status: 400 });
         }
         const updated = await updateOrder(order.id, {
@@ -140,6 +141,37 @@ export async function POST(req: Request) {
           providerError: undefined,
         });
         return NextResponse.json({ ok: true, order: updated });
+      }
+      case "resubmit_pending_orders": {
+        const services = await listServices();
+        const pending = (await listOrders()).filter((o) => !o.providerOrderId && o.status === "pending");
+        let sent = 0;
+        const errors: Array<{ orderId: string; error: string }> = [];
+        for (const order of pending) {
+          const service = services.find((s) => s.id === order.serviceId);
+          if (!service) {
+            errors.push({ orderId: order.id, error: "Service not found" });
+            continue;
+          }
+          const result = await submitOrderToProvider(service, {
+            link: order.link,
+            quantity: order.quantity,
+            comments: order.comments,
+          });
+          if (result.ok) {
+            await updateOrder(order.id, {
+              providerOrderId: result.providerOrderId,
+              status: "processing",
+              mode: "auto",
+              providerError: undefined,
+            });
+            sent += 1;
+          } else {
+            await updateOrder(order.id, { providerError: result.error, mode: "manual" });
+            errors.push({ orderId: order.id, error: result.error });
+          }
+        }
+        return NextResponse.json({ ok: true, sent, checked: pending.length, errors });
       }
       case "add_payment": {
         const row = await adminAddPayment({

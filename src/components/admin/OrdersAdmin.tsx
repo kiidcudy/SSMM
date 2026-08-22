@@ -159,6 +159,27 @@ export function OrdersAdmin({
 
       {err ? <p className="mt-2 text-sm text-red-600">{err}</p> : null}
 
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          disabled={busy}
+          className="rounded border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+          onClick={() =>
+            run(async () => {
+              const data = (await adminAction("resubmit_pending_orders", {})) as {
+                sent?: number;
+                checked?: number;
+                errors?: Array<{ orderId: string; error: string }>;
+              };
+              const failed = data.errors?.length || 0;
+              alert(`Sent ${data.sent || 0} of ${data.checked || 0} pending orders.${failed ? ` ${failed} failed — check Status column for errors.` : ""}`);
+            })
+          }
+        >
+          Send all pending to SMMFlare
+        </button>
+      </div>
+
       <div className="mt-3 overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="table-admin table-admin-orders">
           <thead>
@@ -236,7 +257,15 @@ export function OrdersAdmin({
                   </td>
                   <td>{o.remains ?? "—"}</td>
                   <td className="whitespace-nowrap text-xs">{fmt(o.createdAt)}</td>
-                  <td className="capitalize">{o.mode || "manual"}</td>
+                  <td>
+                    {o.providerOrderId ? (
+                      <span className="capitalize text-emerald-700">Auto</span>
+                    ) : (
+                      <span className="text-amber-700" title={o.providerError || "Not sent to SMMFlare yet"}>
+                        Manual
+                      </span>
+                    )}
+                  </td>
                   <td>
                     <ActionMenu
                       items={[

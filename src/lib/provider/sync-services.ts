@@ -1,4 +1,4 @@
-import { providerServices, type ProviderService } from "@/lib/provider/perfectpanel";
+import { providerDisplayName, providerServices, type ProviderService } from "@/lib/provider/perfectpanel";
 import type { PanelService } from "@/lib/data/catalog";
 import { applyMarkup, normalizeServiceType } from "@/lib/provider/service-fields";
 import { buildServiceDescription, cleanServiceName } from "@/lib/provider/service-description";
@@ -67,5 +67,8 @@ export function mapProviderService(s: ProviderService, opts?: MapProviderOpts): 
 export async function fetchMappedProviderServices(): Promise<PanelService[]> {
   const raw = await providerServices();
   if (!Array.isArray(raw)) throw new Error("Provider services response is not an array");
-  return raw.map((s) => mapProviderService(s));
+  const host = process.env.PROVIDER_API_URL
+    ? providerDisplayName(process.env.PROVIDER_API_URL)
+    : undefined;
+  return raw.map((s) => mapProviderService(s, { providerHost: host }));
 }

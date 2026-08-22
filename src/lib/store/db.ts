@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { get, put } from "@vercel/blob";
 import { type PanelService } from "@/lib/data/catalog";
+import { resolveProviderApiUrl } from "@/lib/provider/perfectpanel";
 
 const BLOB_DB_PATH = "ssmm/db.json";
 
@@ -428,6 +429,29 @@ function migrateDb(db: DbShape): DbShape {
 
   for (const o of db.orders) {
     if (!o.mode) o.mode = o.providerOrderId ? "auto" : "manual";
+  }
+
+  for (const s of db.services) {
+    if (!s.providerServiceId && s.id) s.providerServiceId = s.id;
+    if (!s.providerId && s.providerHost && db.providers.length) {
+      const host = s.providerHost.toLowerCase().replace(/^www\./, "");
+      const match = db.providers.find((p) => {
+        if (!p.apiKey) return false;
+        const name = p.name.toLowerCase().replace(/^www\./, "");
+        return name === host || p.url.toLowerCase().includes(host) || p.apiUrl.toLowerCase().includes(host);
+      });
+      if (match) s.providerId = match.id;
+    }
+  }
+
+  for (const p of db.providers) {
+    if (p.apiUrl) {
+      try {
+        p.apiUrl = resolveProviderApiUrl(p.apiUrl);
+      } catch {
+        /* keep stored url */
+      }
+    }
   }
 
   const numericOrderIds = db.orders
