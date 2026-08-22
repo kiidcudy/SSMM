@@ -14,13 +14,15 @@ import { chargeFor } from "@/lib/data/catalog";
 import { formatApiStatus, prepareAddOrder } from "@/lib/api/perfectpanel-compat";
 import {
   isProviderConfigured,
-  providerAdd,
   providerCancel,
   providerMultiRefillStatus,
   providerRefill,
   providerRefillStatus,
 } from "@/lib/provider/perfectpanel";
-import { fieldsForService } from "@/lib/provider/service-fields";
+import {
+  resolveProviderCredentialsForOrder,
+  submitOrderToProvider,
+} from "@/lib/provider/submit-order";
 
 async function readParams(req: Request): Promise<Record<string, string>> {
   const contentType = req.headers.get("content-type") || "";
@@ -54,19 +56,23 @@ function orderStatusPayload(order: {
   };
 }
 
-async function requestRefill(orderId: string, userId: string) {
+type RefillResult = { refill: string } | { error: string };
+
+async function requestRefill(orderId: string, userId: string): Promise<RefillResult> {
   const order = await getOrder(orderId);
   if (!order || order.userId !== userId) {
-    return { error: "Incorrect order ID" as const };
+    return { error: "Incorrect order ID" };
   }
   const services = await listServices();
   const service = services.find((s) => s.id === order.serviceId);
-  if (!service?.refill) return { error: "Refill not available" as const };
-  if (!order.providerOrderId || !isProviderConfigured()) {
-    return { error: "Refill unavailable" as const };
-  }
+  if (!service?.refill) return { error: "Refill not available" };
+  if (!order.providerOrderId) return { error: "Refill unavailable" };
+
+  const creds = await resolveProviderCredentialsForOrder(order, services);
+  if (!creds) return { error: "Refill unavailable" };
+
   try {
-    const result = await providerRefill(order.providerOrderId);
+    const result = await providerRefill(order.providerOrderId, creds);
     const refill = await createRefill({
       orderId: order.id,
       userId,
@@ -144,7 +150,6 @@ export async function POST(req: Request) {
       if (!prepared.ok) return NextResponse.json({ error: prepared.error });
 
       const { quantity } = prepared;
-      const fields = fieldsForService(service);
       const charge = chargeFor(service, quantity);
       if (user.balance < charge) return NextResponse.json({ error: "Not enough funds" });
 
@@ -153,43 +158,34 @@ export async function POST(req: Request) {
         note: `API order · service ${service.id}`,
       });
 
-      let providerOrderId: string | undefined;
-      let status: "pending" | "processing" = "pending";
-      if (isProviderConfigured()) {
-        try {
-          const result = await providerAdd({
-            service: service.providerServiceId ?? service.id,
-            link: params.link,
-            quantity: fields.needsQuantity || fields.quantityFromComments ? quantity : undefined,
-            comments: params.comments,
-            keywords: params.keywords,
-            usernames: params.usernames,
-            hashtags: params.hashtags,
-            hashtag: params.hashtag,
-            username: params.username,
-            media: params.media,
-            groups: params.groups,
-            answer_number: params.answer_number,
-            country: params.country,
-            device: params.device,
-            type_of_traffic: params.type_of_traffic,
-            google_keyword: params.google_keyword,
-            referring_url: params.referring_url,
-            posts: params.posts,
-            old_posts: params.old_posts,
-            delay: params.delay ?? (service.type === "subscriptions" ? "0" : undefined),
-            expiry: params.expiry,
-            runs: params.runs,
-            interval: params.interval,
-            min: service.type === "subscriptions" ? service.min : undefined,
-            max: service.type === "subscriptions" ? service.max : undefined,
-          });
-          providerOrderId = String(result.order);
-          status = "processing";
-        } catch {
-          status = "pending";
-        }
-      }
+      const provider = await submitOrderToProvider(service, {
+        link: params.link,
+        quantity,
+        comments: params.comments,
+        keywords: params.keywords,
+        usernames: params.usernames,
+        hashtags: params.hashtags,
+        hashtag: params.hashtag,
+        username: params.username,
+        media: params.media,
+        groups: params.groups,
+        answer_number: params.answer_number,
+        country: params.country,
+        device: params.device,
+        type_of_traffic: params.type_of_traffic,
+        google_keyword: params.google_keyword,
+        referring_url: params.referring_url,
+        posts: params.posts,
+        old_posts: params.old_posts,
+        delay: params.delay,
+        expiry: params.expiry,
+        runs: params.runs,
+        interval: params.interval,
+      });
+
+      const providerOrderId = provider.ok ? provider.providerOrderId : undefined;
+      const status = provider.ok ? "processing" : "pending";
+      const providerError = provider.ok ? undefined : provider.error;
 
       const order = await createOrder({
         userId: user.id,
@@ -200,6 +196,7 @@ export async function POST(req: Request) {
         charge,
         status,
         providerOrderId,
+        providerError,
         comments: params.comments,
         source: "api",
       });
@@ -309,26 +306,23 @@ export async function POST(req: Request) {
         .filter(Boolean);
       if (!ids.length) return NextResponse.json({ error: "Incorrect order ID" });
       const out: Array<{ order: string; cancel: number | { error: string } }> = [];
-      const providerIds: string[] = [];
+      const services = await listServices();
       for (const id of ids) {
         const order = await getOrder(id);
         if (!order || order.userId !== user.id) {
           out.push({ order: id, cancel: { error: "Incorrect order ID" } });
           continue;
         }
-        const services = await listServices();
         const service = services.find((s) => s.id === order.serviceId);
         if (!service?.cancel || !order.providerOrderId) {
           out.push({ order: id, cancel: { error: "Cancel not available" } });
           continue;
         }
-        providerIds.push(order.providerOrderId);
         out.push({ order: id, cancel: 1 });
         await updateOrder(order.id, { status: "canceled" });
-      }
-      if (providerIds.length && isProviderConfigured()) {
         try {
-          await providerCancel(providerIds);
+          const creds = await resolveProviderCredentialsForOrder(order, services);
+          if (creds) await providerCancel([order.providerOrderId], creds);
         } catch {
           /* local cancel already marked */
         }

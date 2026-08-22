@@ -25,6 +25,7 @@ export type AdminOrderRow = {
   startCount?: number;
   mode?: "auto" | "manual";
   source?: "api" | "panel";
+  providerError?: string;
   cancelReason?: string;
   comments?: string;
 };
@@ -227,6 +228,11 @@ export function OrdersAdmin({
                     <span className="text-sm capitalize text-gray-800">
                       {STATUS_LABELS[o.status] || o.status}
                     </span>
+                    {o.providerError ? (
+                      <div className="mt-0.5 max-w-[180px] text-[10px] leading-tight text-red-600" title={o.providerError}>
+                        {o.providerError}
+                      </div>
+                    ) : null}
                   </td>
                   <td>{o.remains ?? "—"}</td>
                   <td className="whitespace-nowrap text-xs">{fmt(o.createdAt)}</td>
@@ -259,6 +265,15 @@ export function OrdersAdmin({
                             setStartCount(String(o.startCount ?? ""));
                           },
                         },
+                        ...(o.providerOrderId
+                          ? []
+                          : [
+                              {
+                                label: "Resubmit to provider",
+                                onClick: () =>
+                                  run(() => adminAction("resubmit_order", { orderId: o.id })),
+                              },
+                            ]),
                         {
                           label: "Cancel + refund",
                           danger: true,
@@ -409,6 +424,7 @@ function DetailBody({ detail }: { detail: AdminOrderRow }) {
       <Row k="Charge" v={`$${detail.charge.toFixed(4)}`} />
       <Row k="Status" v={detail.status} />
       <Row k="Provider ID" v={detail.providerOrderId || "—"} />
+      <Row k="Provider error" v={detail.providerError || "—"} />
       <Row k="Cancel reason" v={detail.cancelReason || "—"} />
     </dl>
   );

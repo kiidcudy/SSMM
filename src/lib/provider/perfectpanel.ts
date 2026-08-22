@@ -47,7 +47,18 @@ function envConfig(): ProviderCredentials | null {
   const apiUrl = process.env.PROVIDER_API_URL?.trim();
   const apiKey = process.env.PROVIDER_API_KEY?.trim();
   if (!apiUrl || !apiKey || apiKey === "pending") return null;
-  return { apiUrl, apiKey };
+  return { apiUrl: resolveProviderApiUrl(apiUrl), apiKey };
+}
+
+/** Env-based provider credentials (PROVIDER_API_URL + PROVIDER_API_KEY). */
+export function resolveProviderCredentials(): ProviderCredentials | null {
+  return envConfig();
+}
+
+export async function isAnyProviderConfigured(): Promise<boolean> {
+  if (envConfig()) return true;
+  const { listProviders } = await import("@/lib/store/db");
+  return (await listProviders()).some((p) => Boolean(p.apiKey));
 }
 
 export function isProviderConfigured(): boolean {
@@ -132,7 +143,18 @@ export type ProviderOrderParams = {
   max?: string | number;
 };
 
-export async function providerAdd(input: ProviderOrderParams): Promise<{ order: number }> {
+export async function providerAdd(
+  input: ProviderOrderParams,
+  creds?: ProviderCredentials,
+): Promise<{ order: number }> {
+  return providerAddWithConfig(creds || envConfig(), input);
+}
+
+export async function providerAddWithConfig(
+  creds: ProviderCredentials | null,
+  input: ProviderOrderParams,
+): Promise<{ order: number }> {
+  if (!creds) throw new Error("Provider not configured");
   const params: Record<string, string | number> = { service: input.service };
   const keys: (keyof ProviderOrderParams)[] = [
     "link",
@@ -164,21 +186,31 @@ export async function providerAdd(input: ProviderOrderParams): Promise<{ order: 
     const v = input[k];
     if (v !== undefined && v !== null && v !== "") params[k] = v as string | number;
   }
-  return call<{ order: number }>("add", params);
+  return callWithConfig<{ order: number }>(creds, "add", params);
 }
 
-export async function providerStatus(orderId: number | string): Promise<{
+export async function providerStatus(
+  orderId: number | string,
+  creds?: ProviderCredentials,
+): Promise<{
   charge: string;
   start_count: string;
   status: string;
   remains: string;
   currency: string;
 }> {
-  return call("status", { order: orderId });
+  const cfg = creds || envConfig();
+  if (!cfg) throw new Error("Provider not configured");
+  return callWithConfig(cfg, "status", { order: orderId });
 }
 
-export async function providerRefill(orderId: number | string): Promise<{ refill: string | number }> {
-  return call("refill", { order: orderId });
+export async function providerRefill(
+  orderId: number | string,
+  creds?: ProviderCredentials,
+): Promise<{ refill: string | number }> {
+  const cfg = creds || envConfig();
+  if (!cfg) throw new Error("Provider not configured");
+  return callWithConfig(cfg, "refill", { order: orderId });
 }
 
 export async function providerMultiRefill(orderIds: Array<number | string>) {
@@ -195,6 +227,11 @@ export async function providerMultiRefillStatus(refillIds: Array<number | string
   >("refill_status", { refills: refillIds.join(",") });
 }
 
-export async function providerCancel(orderIds: Array<number | string>) {
-  return call("cancel", { orders: orderIds.join(",") });
+export async function providerCancel(
+  orderIds: Array<number | string>,
+  creds?: ProviderCredentials,
+) {
+  const cfg = creds || envConfig();
+  if (!cfg) throw new Error("Provider not configured");
+  return callWithConfig(cfg, "cancel", { orders: orderIds.join(",") });
 }

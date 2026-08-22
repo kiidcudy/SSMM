@@ -8,10 +8,9 @@ import {
   getServiceOverrides,
   listOrders,
   listServices,
-  updateOrder,
 } from "@/lib/store/db";
 import { chargeFor } from "@/lib/data/catalog";
-import { isProviderConfigured, providerAdd } from "@/lib/provider/perfectpanel";
+import { submitOrderToProvider } from "@/lib/provider/submit-order";
 import { countLines, fieldsForService } from "@/lib/provider/service-fields";
 
 const createSchema = z.object({
@@ -90,7 +89,6 @@ export async function POST(req: Request) {
     }
     if (fields.needsLink && body.link) {
       try {
-        // allow non-http usernames for rare cases; prefer URL when looks like URL
         if (body.link.includes("://") || body.link.startsWith("www.")) {
           new URL(body.link.startsWith("www.") ? `https://${body.link}` : body.link);
         }
@@ -147,45 +145,34 @@ export async function POST(req: Request) {
 
     await adjustBalance(session.id, -charge, charge);
 
-    let providerOrderId: string | undefined;
-    let status: "pending" | "processing" = "pending";
+    const provider = await submitOrderToProvider(service, {
+      link: body.link || undefined,
+      quantity,
+      comments: body.comments,
+      keywords: body.keywords,
+      usernames: body.usernames,
+      hashtags: body.hashtags,
+      hashtag: body.hashtag,
+      username: body.username,
+      media: body.media,
+      groups: body.groups,
+      answer_number: body.answer_number,
+      country: body.country,
+      device: body.device,
+      type_of_traffic: body.type_of_traffic,
+      google_keyword: body.google_keyword,
+      referring_url: body.referring_url,
+      posts: body.posts,
+      old_posts: body.old_posts,
+      delay: body.delay,
+      expiry: body.expiry,
+      runs: body.runs,
+      interval: body.interval,
+    });
 
-    if (isProviderConfigured()) {
-      try {
-        const providerServiceId = service.providerServiceId ?? service.id;
-        const result = await providerAdd({
-          service: providerServiceId,
-          link: body.link || undefined,
-          quantity: fields.needsQuantity || fields.quantityFromComments ? quantity : undefined,
-          comments: body.comments,
-          keywords: body.keywords,
-          usernames: body.usernames,
-          hashtags: body.hashtags,
-          hashtag: body.hashtag,
-          username: body.username,
-          media: body.media,
-          groups: body.groups,
-          answer_number: body.answer_number,
-          country: body.country,
-          device: body.device,
-          type_of_traffic: body.type_of_traffic,
-          google_keyword: body.google_keyword,
-          referring_url: body.referring_url,
-          posts: body.posts,
-          old_posts: body.old_posts,
-          delay: body.delay ?? (service.type === "subscriptions" ? 0 : undefined),
-          expiry: body.expiry,
-          runs: body.runs,
-          interval: body.interval,
-          min: service.type === "subscriptions" ? service.min : undefined,
-          max: service.type === "subscriptions" ? service.max : undefined,
-        });
-        providerOrderId = String(result.order);
-        status = "processing";
-      } catch {
-        status = "pending";
-      }
-    }
+    const providerOrderId = provider.ok ? provider.providerOrderId : undefined;
+    const status = provider.ok ? "processing" : "pending";
+    const providerError = provider.ok ? undefined : provider.error;
 
     const order = await createOrder({
       userId: session.id,
@@ -196,14 +183,12 @@ export async function POST(req: Request) {
       charge,
       status,
       providerOrderId,
+      providerError,
       comments: body.comments,
+      source: "panel",
     });
 
-    if (providerOrderId) {
-      await updateOrder(order.id, { providerOrderId, status });
-    }
-
-    return NextResponse.json({ ok: true, id: order.id, order });
+    return NextResponse.json({ ok: true, id: order.id, order, providerError });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Order failed";
     return NextResponse.json({ error: message }, { status: 400 });

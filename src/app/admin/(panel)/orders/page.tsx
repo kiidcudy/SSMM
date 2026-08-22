@@ -30,6 +30,7 @@ export default async function AdminOrdersPage() {
         source: o.source,
         cancelReason: o.cancelReason,
         comments: o.comments,
+        providerError: o.providerError,
       }))}
     />
   );

@@ -8,10 +8,10 @@ import {
   updateOrder,
 } from "@/lib/store/db";
 import {
-  isProviderConfigured,
   providerCancel,
   providerRefill,
 } from "@/lib/provider/perfectpanel";
+import { resolveProviderCredentialsForOrder } from "@/lib/provider/submit-order";
 
 const schema = z.object({
   action: z.enum(["refill", "cancel"]),
@@ -35,10 +35,10 @@ export async function POST(req: Request) {
 
     if (body.action === "refill") {
       if (!service?.refill) return NextResponse.json({ error: "Refill not available" }, { status: 400 });
-      if (!order.providerOrderId || !isProviderConfigured()) {
-        return NextResponse.json({ error: "Refill unavailable" }, { status: 400 });
-      }
-      const result = await providerRefill(order.providerOrderId);
+      if (!order.providerOrderId) return NextResponse.json({ error: "Refill unavailable" }, { status: 400 });
+      const creds = await resolveProviderCredentialsForOrder(order, services);
+      if (!creds) return NextResponse.json({ error: "Refill unavailable" }, { status: 400 });
+      const result = await providerRefill(order.providerOrderId, creds);
       const refill = await createRefill({
         orderId: order.id,
         userId: order.userId,
@@ -49,9 +49,10 @@ export async function POST(req: Request) {
     }
 
     if (!service?.cancel) return NextResponse.json({ error: "Cancel not available" }, { status: 400 });
-    if (order.providerOrderId && isProviderConfigured()) {
+    if (order.providerOrderId) {
       try {
-        await providerCancel([order.providerOrderId]);
+        const creds = await resolveProviderCredentialsForOrder(order, services);
+        if (creds) await providerCancel([order.providerOrderId], creds);
       } catch {
         /* still mark local */
       }

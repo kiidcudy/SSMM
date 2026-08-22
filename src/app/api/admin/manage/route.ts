@@ -15,6 +15,7 @@ import {
   getProvider,
   importSelectedServices,
   listProviders,
+  listServices,
   replyTicket,
   setServiceOverride,
   servicesBulk,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/store/db";
 import { providerBalance, providerServices } from "@/lib/provider/perfectpanel";
 import { mapProviderService } from "@/lib/provider/sync-services";
+import { submitOrderToProvider } from "@/lib/provider/submit-order";
 
 type Body = {
   action: string;
@@ -111,6 +113,32 @@ export async function POST(req: Request) {
             refId: order.id,
           });
         }
+        return NextResponse.json({ ok: true, order: updated });
+      }
+      case "resubmit_order": {
+        const order = await getOrder(String(body.orderId));
+        if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        if (order.providerOrderId) {
+          return NextResponse.json({ error: "Order already sent to provider" }, { status: 400 });
+        }
+        const services = await listServices();
+        const service = services.find((s) => s.id === order.serviceId);
+        if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+        const result = await submitOrderToProvider(service, {
+          link: order.link,
+          quantity: order.quantity,
+          comments: order.comments,
+        });
+        if (!result.ok) {
+          await updateOrder(order.id, { providerError: result.error });
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+        const updated = await updateOrder(order.id, {
+          providerOrderId: result.providerOrderId,
+          status: "processing",
+          mode: "auto",
+          providerError: undefined,
+        });
         return NextResponse.json({ ok: true, order: updated });
       }
       case "add_payment": {

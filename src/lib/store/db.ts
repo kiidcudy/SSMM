@@ -63,6 +63,7 @@ export type StoredOrder = {
   cancelReason?: string;
   comments?: string;
   source?: "api" | "panel";
+  providerError?: string;
 };
 
 export type FundRequest = {
@@ -1487,6 +1488,7 @@ export async function importSelectedServices(input: {
         existing.dripfeed = mapped.dripfeed;
         existing.providerId = provider.id;
         existing.providerHost = provider.name;
+        existing.providerServiceId = mapped.providerServiceId;
         existing.providerCost = mapped.providerCost;
         existing.markupPercent = mapped.markupPercent;
         existing.markupFixed = mapped.markupFixed;
