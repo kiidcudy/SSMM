@@ -13,6 +13,7 @@ export type AdminOrderRow = {
   username: string;
   serviceId: number;
   serviceName: string;
+  providerHost?: string;
   link: string;
   quantity: number;
   charge: number;
@@ -23,6 +24,7 @@ export type AdminOrderRow = {
   remains?: number;
   startCount?: number;
   mode?: "auto" | "manual";
+  source?: "api" | "panel";
   cancelReason?: string;
   comments?: string;
 };
@@ -39,6 +41,19 @@ const STATUSES = [
   "fail",
   "error",
 ] as const;
+
+const STATUS_LABELS: Record<string, string> = {
+  awaiting: "Awaiting",
+  pending: "Pending",
+  in_progress: "In progress",
+  completed: "Completed",
+  partial: "Partial",
+  canceled: "Canceled",
+  processing: "Processing",
+  fail: "Fail",
+  error: "Error",
+  refunded: "Refunded",
+};
 
 export function OrdersAdmin({
   orders,
@@ -144,7 +159,7 @@ export function OrdersAdmin({
       {err ? <p className="mt-2 text-sm text-red-600">{err}</p> : null}
 
       <div className="mt-3 overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="table-admin">
+        <table className="table-admin table-admin-orders">
           <thead>
             <tr>
               <th>
@@ -153,10 +168,10 @@ export function OrdersAdmin({
               <th>ID</th>
               <th>User</th>
               <th>Charge</th>
-              <th>Link</th>
+              <th className="col-link">Link</th>
               <th>Start count</th>
               <th>Quantity</th>
-              <th>Service</th>
+              <th className="col-service">Service</th>
               <th>Status</th>
               <th>Remains</th>
               <th>Created</th>
@@ -183,35 +198,35 @@ export function OrdersAdmin({
                       <div className="text-[11px] text-gray-400">{o.providerOrderId}</div>
                     ) : null}
                   </td>
-                  <td>{o.username}</td>
                   <td>
-                    <div>{o.charge.toFixed(2)}</div>
-                    {o.cost != null ? <div className="text-[11px] text-gray-400">{o.cost.toFixed(2)}</div> : null}
+                    <div className="flex items-center gap-1.5">
+                      <span>{o.username}</span>
+                      {o.source === "api" ? (
+                        <span className="rounded bg-gray-100 px-1 py-0.5 text-[10px] font-medium uppercase text-gray-500">
+                          API
+                        </span>
+                      ) : null}
+                    </div>
                   </td>
-                  <td className="max-w-[160px] truncate text-blue-600" title={o.link}>
-                    {o.link}
+                  <td>
+                    <div>{o.charge.toFixed(3)}</div>
+                    {o.cost != null ? <div className="text-[11px] text-gray-400">{o.cost.toFixed(6)}</div> : null}
+                  </td>
+                  <td className="col-link">
+                    <OrderLinkCell link={o.link} />
                   </td>
                   <td>{o.startCount ?? "—"}</td>
                   <td>{o.quantity}</td>
-                  <td className="max-w-[220px] text-xs">
-                    {o.serviceId} {o.serviceName}
+                  <td className="col-service text-xs">
+                    <div className="font-medium text-gray-900">
+                      {o.serviceId} {o.serviceName}
+                    </div>
+                    {o.providerHost ? <div className="mt-0.5 text-[11px] text-gray-400">{o.providerHost}</div> : null}
                   </td>
                   <td>
-                    <select
-                      className="rounded border border-gray-200 px-1 py-0.5 text-xs capitalize"
-                      value={o.status}
-                      disabled={busy}
-                      onChange={(e) =>
-                        run(() => adminAction("update_order", { orderId: o.id, status: e.target.value }))
-                      }
-                    >
-                      {STATUSES.filter((s) => s !== "all").map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                      <option value="refunded">refunded</option>
-                    </select>
+                    <span className="text-sm capitalize text-gray-800">
+                      {STATUS_LABELS[o.status] || o.status}
+                    </span>
                   </td>
                   <td>{o.remains ?? "—"}</td>
                   <td className="whitespace-nowrap text-xs">{fmt(o.createdAt)}</td>
@@ -220,6 +235,18 @@ export function OrdersAdmin({
                     <ActionMenu
                       items={[
                         { label: "Details", onClick: () => setDetail(o) },
+                        {
+                          label: "Change status",
+                          onClick: () => {
+                            const next = prompt(
+                              "New status",
+                              o.status,
+                            );
+                            if (next && next !== o.status) {
+                              run(() => adminAction("update_order", { orderId: o.id, status: next }));
+                            }
+                          },
+                        },
                         {
                           label: "Cancel reason",
                           onClick: () =>
@@ -292,8 +319,57 @@ export function OrdersAdmin({
   );
 }
 
+function OrderLinkCell({ link }: { link: string }) {
+  const display = splitOrderTarget(link ?? "").link || link;
+  const href = toExternalHref(display);
+
+  if (!href) {
+    return <span className="order-link-text">{display || "—"}</span>;
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="order-link"
+      title={display}
+    >
+      <ExternalLinkIcon />
+      <span className="order-link-text">{display}</span>
+    </a>
+  );
+}
+
+function toExternalHref(raw: string): string | null {
+  const text = raw.trim();
+  if (!text) return null;
+  if (/^https?:\/\//i.test(text)) return text;
+  if (text.startsWith("www.")) return `https://${text}`;
+  if (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(text)) return `https://${text}`;
+  return null;
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg
+      className="order-link-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden
+    >
+      <path d="M6.5 3.5H3.5A1 1 0 0 0 2.5 4.5v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-3" />
+      <path d="M9 2.5h4.5V7" />
+      <path d="M13 3.5 7.5 9" />
+    </svg>
+  );
+}
+
 function DetailBody({ detail }: { detail: AdminOrderRow }) {
   const linkDisplay = splitOrderTarget(detail.link ?? "").link || detail.link;
+  const linkHref = toExternalHref(linkDisplay);
   const commentLines = (detail.comments ?? "")
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -303,7 +379,18 @@ function DetailBody({ detail }: { detail: AdminOrderRow }) {
     <dl className="space-y-2 text-sm">
       <Row k="User" v={detail.username} />
       <Row k="Service" v={`${detail.serviceId} — ${detail.serviceName}`} />
-      <Row k="Link" v={linkDisplay} />
+      <div className="flex gap-2 border-b border-gray-50 pb-1">
+        <dt className="w-28 shrink-0 text-gray-500">Link</dt>
+        <dd className="break-all">
+          {linkHref ? (
+            <a href={linkHref} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              {linkDisplay}
+            </a>
+          ) : (
+            linkDisplay
+          )}
+        </dd>
+      </div>
       {commentLines.length > 0 ? (
         <div className="border-b border-gray-50 pb-2">
           <dt className="mb-1 w-28 shrink-0 text-gray-500">Comments</dt>

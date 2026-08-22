@@ -16,7 +16,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   return (
     <div className="min-h-screen bg-[#f3f4f6] text-[#111827]">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-2.5">
+        <div className="mx-auto flex max-w-[1920px] items-center justify-between px-4 py-2.5">
           <Link href="/admin/users" className="text-base font-bold tracking-tight">
             SSMM Admin
           </Link>
@@ -35,7 +35,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
         </div>
         <AdminNav unreadTickets={unreadTickets} />
       </header>
-      <main className="mx-auto max-w-[1400px] px-4 py-5">{children}</main>
+      <main className="mx-auto max-w-[1920px] px-4 py-5">{children}</main>
     </div>
   );
 }

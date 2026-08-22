@@ -62,6 +62,7 @@ export type StoredOrder = {
   mode?: "auto" | "manual";
   cancelReason?: string;
   comments?: string;
+  source?: "api" | "panel";
 };
 
 export type FundRequest = {

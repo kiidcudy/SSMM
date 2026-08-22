@@ -33,8 +33,8 @@ export default async function DashboardApiPage() {
           <li>action=add (service, link, quantity + type-specific fields)</li>
           <li>action=status (order or orders)</li>
           <li>action=balance</li>
-          <li>action=refill (order)</li>
-          <li>action=refill_status (refill)</li>
+          <li>action=refill (order or orders)</li>
+          <li>action=refill_status (refill or refills)</li>
           <li>action=cancel (orders)</li>
         </ul>
         <p className="mt-3">

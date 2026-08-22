@@ -11,10 +11,12 @@ import {
   updateRefill,
 } from "@/lib/store/db";
 import { chargeFor } from "@/lib/data/catalog";
+import { formatApiStatus, prepareAddOrder } from "@/lib/api/perfectpanel-compat";
 import {
   isProviderConfigured,
   providerAdd,
   providerCancel,
+  providerMultiRefillStatus,
   providerRefill,
   providerRefillStatus,
 } from "@/lib/provider/perfectpanel";
@@ -34,6 +36,47 @@ async function readParams(req: Request): Promise<Record<string, string>> {
     out[k] = String(v);
   });
   return out;
+}
+
+function orderStatusPayload(order: {
+  charge: number;
+  startCount?: number;
+  status: string;
+  remains?: number;
+  quantity: number;
+}) {
+  return {
+    charge: order.charge.toFixed(5),
+    start_count: String(order.startCount ?? 0),
+    status: formatApiStatus(order.status),
+    remains: String(order.remains ?? order.quantity),
+    currency: "USD",
+  };
+}
+
+async function requestRefill(orderId: string, userId: string) {
+  const order = await getOrder(orderId);
+  if (!order || order.userId !== userId) {
+    return { error: "Incorrect order ID" as const };
+  }
+  const services = await listServices();
+  const service = services.find((s) => s.id === order.serviceId);
+  if (!service?.refill) return { error: "Refill not available" as const };
+  if (!order.providerOrderId || !isProviderConfigured()) {
+    return { error: "Refill unavailable" as const };
+  }
+  try {
+    const result = await providerRefill(order.providerOrderId);
+    const refill = await createRefill({
+      orderId: order.id,
+      userId,
+      providerRefillId: String(result.refill),
+      status: "pending",
+    });
+    return { refill: refill.id };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Refill failed" };
+  }
 }
 
 export async function POST(req: Request) {
@@ -77,13 +120,7 @@ export async function POST(req: Request) {
           if (!order || order.userId !== user.id) {
             out[id] = { error: "Incorrect order ID" };
           } else {
-            out[id] = {
-              charge: order.charge.toFixed(5),
-              start_count: String(order.startCount ?? 0),
-              status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
-              remains: String(order.remains ?? order.quantity),
-              currency: "USD",
-            };
+            out[id] = orderStatusPayload(order);
           }
         }
         return NextResponse.json(out);
@@ -94,13 +131,7 @@ export async function POST(req: Request) {
       if (!order || order.userId !== user.id) {
         return NextResponse.json({ error: "Incorrect order ID" });
       }
-      return NextResponse.json({
-        charge: order.charge.toFixed(5),
-        start_count: String(order.startCount ?? 0),
-        status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
-        remains: String(order.remains ?? order.quantity),
-        currency: "USD",
-      });
+      return NextResponse.json(orderStatusPayload(order));
     }
 
     if (action === "add") {
@@ -108,15 +139,12 @@ export async function POST(req: Request) {
       const services = await listServices();
       const service = services.find((s) => s.id === serviceId);
       if (!service) return NextResponse.json({ error: "Incorrect service ID" });
-      const fields = fieldsForService(service);
-      const quantity = Number(params.quantity || service.min || 1);
-      if (fields.needsQuantity && (quantity < service.min || quantity > service.max)) {
-        return NextResponse.json({ error: "Quantity out of range" });
-      }
-      if (fields.needsLink && !params.link) {
-        return NextResponse.json({ error: "Link required" });
-      }
 
+      const prepared = prepareAddOrder(service, params);
+      if (!prepared.ok) return NextResponse.json({ error: prepared.error });
+
+      const { quantity } = prepared;
+      const fields = fieldsForService(service);
       const charge = chargeFor(service, quantity);
       if (user.balance < charge) return NextResponse.json({ error: "Not enough funds" });
 
@@ -132,7 +160,7 @@ export async function POST(req: Request) {
           const result = await providerAdd({
             service: service.providerServiceId ?? service.id,
             link: params.link,
-            quantity: fields.needsQuantity ? quantity : undefined,
+            quantity: fields.needsQuantity || fields.quantityFromComments ? quantity : undefined,
             comments: params.comments,
             keywords: params.keywords,
             usernames: params.usernames,
@@ -149,7 +177,7 @@ export async function POST(req: Request) {
             referring_url: params.referring_url,
             posts: params.posts,
             old_posts: params.old_posts,
-            delay: params.delay,
+            delay: params.delay ?? (service.type === "subscriptions" ? "0" : undefined),
             expiry: params.expiry,
             runs: params.runs,
             interval: params.interval,
@@ -173,41 +201,84 @@ export async function POST(req: Request) {
         status,
         providerOrderId,
         comments: params.comments,
+        source: "api",
       });
 
       return NextResponse.json({ order: order.id });
     }
 
     if (action === "refill") {
+      if (params.orders) {
+        const ids = params.orders.split(",").map((s) => s.trim()).filter(Boolean);
+        const out: Array<{ order: string; refill: string | { error: string } }> = [];
+        for (const id of ids) {
+          const result = await requestRefill(id, user.id);
+          if ("error" in result) {
+            out.push({ order: id, refill: { error: result.error } });
+          } else {
+            out.push({ order: id, refill: result.refill });
+          }
+        }
+        return NextResponse.json(out);
+      }
+
       const orderId = params.order;
       if (!orderId) return NextResponse.json({ error: "Incorrect order ID" });
-      const order = await getOrder(orderId);
-      if (!order || order.userId !== user.id) {
-        return NextResponse.json({ error: "Incorrect order ID" });
-      }
-      const services = await listServices();
-      const service = services.find((s) => s.id === order.serviceId);
-      if (!service?.refill) return NextResponse.json({ error: "Refill not available" });
-      if (!order.providerOrderId || !isProviderConfigured()) {
-        return NextResponse.json({ error: "Refill unavailable" });
-      }
-      try {
-        const result = await providerRefill(order.providerOrderId);
-        const refill = await createRefill({
-          orderId: order.id,
-          userId: user.id,
-          providerRefillId: String(result.refill),
-          status: "pending",
-        });
-        return NextResponse.json({ refill: refill.id });
-      } catch (e) {
-        return NextResponse.json({
-          error: e instanceof Error ? e.message : "Refill failed",
-        });
-      }
+      const result = await requestRefill(orderId, user.id);
+      if ("error" in result) return NextResponse.json({ error: result.error });
+      return NextResponse.json({ refill: result.refill });
     }
 
     if (action === "refill_status") {
+      if (params.refills) {
+        const ids = params.refills.split(",").map((s) => s.trim()).filter(Boolean);
+        const out: Array<{ refill: string; status: string | { error: string } }> = [];
+
+        if (isProviderConfigured()) {
+          const owned = await Promise.all(
+            ids.map(async (id) => ({ id, row: await getRefill(id) })),
+          );
+          const providerIds = owned
+            .filter(({ row }) => row && row.userId === user.id && row.providerRefillId)
+            .map(({ row }) => row!.providerRefillId!);
+          if (providerIds.length) {
+            try {
+              const remote = await providerMultiRefillStatus(providerIds);
+              if (Array.isArray(remote)) {
+                for (const item of remote) {
+                  const local = owned.find(({ row }) => row?.providerRefillId === String(item.refill));
+                  const refillId = local?.id || String(item.refill);
+                  if (typeof item.status === "object" && item.status && "error" in item.status) {
+                    out.push({ refill: refillId, status: item.status });
+                  } else {
+                    const mapped = String(item.status).toLowerCase().includes("reject")
+                      ? "rejected"
+                      : String(item.status).toLowerCase().includes("complete")
+                        ? "completed"
+                        : "pending";
+                    if (local?.row) await updateRefill(local.row.id, { status: mapped });
+                    out.push({ refill: refillId, status: formatApiStatus(String(item.status)) });
+                  }
+                }
+                return NextResponse.json(out);
+              }
+            } catch {
+              /* fall through to local */
+            }
+          }
+        }
+
+        for (const id of ids) {
+          const refill = await getRefill(id);
+          if (!refill || refill.userId !== user.id) {
+            out.push({ refill: id, status: { error: "Refill not found" } });
+          } else {
+            out.push({ refill: id, status: formatApiStatus(refill.status) });
+          }
+        }
+        return NextResponse.json(out);
+      }
+
       const refillId = params.refill;
       if (!refillId) return NextResponse.json({ error: "Incorrect refill ID" });
       const refill = await getRefill(refillId);
@@ -223,14 +294,12 @@ export async function POST(req: Request) {
               ? "completed"
               : "pending";
           await updateRefill(refill.id, { status: mapped });
-          return NextResponse.json({ status: st.status });
+          return NextResponse.json({ status: formatApiStatus(st.status) });
         } catch {
           /* fall through */
         }
       }
-      return NextResponse.json({
-        status: refill.status.charAt(0).toUpperCase() + refill.status.slice(1),
-      });
+      return NextResponse.json({ status: formatApiStatus(refill.status) });
     }
 
     if (action === "cancel") {

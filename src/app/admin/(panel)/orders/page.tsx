@@ -1,9 +1,12 @@
-import { listOrders, listUsers } from "@/lib/store/db";
+import { listOrders, listServices, listUsers } from "@/lib/store/db";
 import { OrdersAdmin } from "@/components/admin/OrdersAdmin";
 
 export default async function AdminOrdersPage() {
-  const [orders, users] = await Promise.all([listOrders(), listUsers()]);
+  const [orders, users, services] = await Promise.all([listOrders(), listUsers(), listServices()]);
   const byId = Object.fromEntries(users.map((u) => [u.id, u.username]));
+  const providerByService = Object.fromEntries(
+    services.map((s) => [s.id, s.providerHost || ""]),
+  );
 
   return (
     <OrdersAdmin
@@ -13,6 +16,7 @@ export default async function AdminOrdersPage() {
         username: byId[o.userId] || o.userId.slice(0, 8),
         serviceId: o.serviceId,
         serviceName: o.serviceName,
+        providerHost: providerByService[o.serviceId] || undefined,
         link: o.link,
         quantity: o.quantity,
         charge: o.charge,
@@ -23,6 +27,7 @@ export default async function AdminOrdersPage() {
         remains: o.remains,
         startCount: o.startCount,
         mode: o.mode,
+        source: o.source,
         cancelReason: o.cancelReason,
         comments: o.comments,
       }))}
