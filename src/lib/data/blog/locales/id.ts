@@ -261,4 +261,53 @@ export const posts: Record<string, BlogPost> = {
       }
     ]
   }),
+  "instagram-reels-smm-panel-guide-2026": assemblePost(base("instagram-reels-smm-panel-guide-2026"), {
+  "title": "Panduan Instagram Reels SMM Panel 2026",
+  "metaTitle": "Panduan Instagram Reels SMM Panel 2026 | SSMM",
+  "metaDescription": "Panel Instagram Reels SMM 2026: views, likes, drip-feed.",
+  "focusKeyword": "instagram reels smm panel",
+  "keywords": [
+    "instagram reels smm panel",
+    "ssmmpanel.com"
+  ],
+  "excerpt": "Playbook Instagram Reels SMM panel 2026.",
+  "takeaway": "Setiap layanan punya tugas jelas.",
+  "imageAlt": "Sampul panduan Reels 2026",
+  "imageAlt2": "Mix mingguan",
+  "contentHtml": "<p><strong>Panel Instagram Reels SMM</strong> URL publik. <a href=\"/services\">layanan</a>, <a href=\"/free-services\">gratis</a>.</p><h2>Fungsi panel</h2><p>Momentum bukan hook lemah.</p><h2>Views Reels</h2><p>Hangatkan counter.</p><h2>Likes</h2><p>Dekat publish.</p><h2>Followers</h2><p>Drip kecil.</p><h2>Drip-feed</h2><p><a href=\"/faq\">FAQ</a>.</p><h2>Mix mingguan</h2><p>Konsisten.</p><h2>Gratis vs bayar</h2><p>free services.</p><h2>Sprint</h2><p><a href=\"/signup\">Akun</a>.</p>",
+  "faq": [
+    {
+      "q": "Apa panel Reels?",
+      "a": "Dashboard views/likes URL publik."
+    },
+    {
+      "q": "Followers atau views?",
+      "a": "Profil kosong: followers. Reels kuat: views."
+    },
+    {
+      "q": "Password?",
+      "a": "Tidak."
+    },
+    {
+      "q": "Explore?",
+      "a": "Tidak dijamin."
+    },
+    {
+      "q": "Drip-feed?",
+      "a": "Akun baru."
+    },
+    {
+      "q": "Gratis?",
+      "a": "Ya."
+    },
+    {
+      "q": "Reels vs post?",
+      "a": "Reels = watch time."
+    },
+    {
+      "q": "Track?",
+      "a": "Watch %, saves."
+    }
+  ]
+}),
 };
