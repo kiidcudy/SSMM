@@ -42,14 +42,19 @@ export function DepositHistory({ locale, labels }: { locale: Locale; labels: Lab
   const amountHeader = labels.amount.replace("{currency}", currencyForLocale(locale));
 
   useEffect(() => {
-    fetch("/api/funds")
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed");
-        setFunds(data.funds || []);
-        setLedger(data.ledger || []);
-      })
-      .catch((e: Error) => setError(e.message));
+    function load() {
+      fetch("/api/funds")
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed");
+          setFunds(data.funds || []);
+          setLedger(data.ledger || []);
+        })
+        .catch((e: Error) => setError(e.message));
+    }
+    load();
+    window.addEventListener("ssmm:funds-updated", load);
+    return () => window.removeEventListener("ssmm:funds-updated", load);
   }, []);
 
   if (error) return <p className="mt-6 text-sm text-red-300">{error}</p>;

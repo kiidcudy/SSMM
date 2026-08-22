@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   PAYMENT_METHODS,
   convertToUsd,
@@ -47,12 +48,30 @@ export function AddFundsForm({
   labels: Labels;
   username: string;
 }) {
+  return (
+    <Suspense fallback={<div className="card max-w-lg p-6 text-sm text-[#93a0b8]">{labels.submitting}</div>}>
+      <AddFundsFormInner locale={locale} labels={labels} username={username} />
+    </Suspense>
+  );
+}
+
+function AddFundsFormInner({
+  locale,
+  labels,
+  username,
+}: {
+  locale: Locale;
+  labels: Labels;
+  username: string;
+}) {
+  const searchParams = useSearchParams();
   const [method, setMethod] = useState<PaymentSlug>("cryptomus");
   const [amount, setAmount] = useState(10);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [binanceOpen, setBinanceOpen] = useState(false);
   const [binanceRef, setBinanceRef] = useState("");
 
@@ -61,7 +80,47 @@ export function AddFundsForm({
   const amountUsd = Math.round(convertToUsd(amount, locale) * 100) / 100;
   const isBinance = method === "binance-pay";
   const isCryptomus = method === "cryptomus";
-  const isSelfServe = isBinance || isCryptomus;
+  const isCreditCard = method === "credit-card";
+  const isSelfServe = isBinance || isCryptomus || isCreditCard;
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (searchParams.get("paid") !== "1" || !ref) return;
+
+    const refId = ref;
+    let cancelled = false;
+    setMessage(labels.submitting);
+
+    async function pollReturn() {
+      const start = Date.now();
+      while (!cancelled && Date.now() - start < 120_000) {
+        try {
+          const res = await fetch("/api/funds", { cache: "no-store" });
+          if (res.ok) {
+            const data = (await res.json()) as {
+              funds?: { id: string; status: string }[];
+            };
+            const fund = data.funds?.find((f) => f.id === refId);
+            if (fund?.status === "completed") {
+              if (!cancelled) {
+                setMessage(labels.fundSubmitted.replace("{id}", refId));
+                window.dispatchEvent(new Event("ssmm:funds-updated"));
+              }
+              return;
+            }
+          }
+        } catch {
+          /* retry */
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+
+    void pollReturn();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, labels.fundSubmitted, labels.submitting]);
 
   async function createFundRequest(extraNote = "") {
     const res = await fetch("/api/funds", {
@@ -92,14 +151,14 @@ export function AddFundsForm({
         setMessage(labels.fundSubmitted.replace("{id}", id));
         return;
       }
-      if (isCryptomus) {
+      if (isCryptomus || isCreditCard) {
         const res = await fetch("/api/funds", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             method,
             amount: amountUsd,
-            note,
+            note: isCryptomus ? note : `Card top-up ${amountUsd} USD`,
           }),
         });
         const data = (await res.json()) as {
@@ -109,6 +168,7 @@ export function AddFundsForm({
         };
         if (!res.ok) throw new Error(data.error || labels.requestFailed);
         if (data.paymentUrl) {
+          setRedirecting(true);
           window.location.assign(data.paymentUrl);
           return;
         }
@@ -182,10 +242,13 @@ export function AddFundsForm({
             ) : null}
             {error ? <p className="text-sm text-red-300">{error}</p> : null}
             {message ? <p className="text-sm text-emerald-300">{message}</p> : null}
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading
+            {redirecting ? (
+              <p className="text-sm text-[#93a0b8]">{labels.submitting}</p>
+            ) : null}
+            <button type="submit" className="btn-primary" disabled={loading || redirecting}>
+              {loading || redirecting
                 ? labels.submitting
-                : isCryptomus
+                : isCryptomus || isCreditCard
                   ? labels.pay
                   : isBinance
                     ? labels.binanceContinue

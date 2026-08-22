@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readSession } from "@/lib/auth/session";
-import { createFundRequest, listFundsForUser, listLedger } from "@/lib/store/db";
+import { createFundRequest, listFundsForUser, listLedger, approveFund } from "@/lib/store/db";
 import { PAYMENT_METHODS, SITE } from "@/lib/site";
 import { createCryptomusInvoice, isCryptomusConfigured } from "@/lib/payments/cryptomus";
+import {
+  createInstazzyOrder,
+  getInstazzyOrderStatus,
+  instazzyConfigured,
+} from "@/lib/payments/instazzy-partner";
 
 const methodSlugs = new Set(PAYMENT_METHODS.map((m) => m.slug));
 
@@ -18,6 +23,24 @@ const schema = z.object({
 export async function GET() {
   const session = await readSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (instazzyConfigured()) {
+    const funds = await listFundsForUser(session.id);
+    const pendingCard = funds.filter(
+      (f) => f.method === "credit-card" && f.mode === "auto" && f.status === "pending",
+    );
+    for (const fund of pendingCard) {
+      try {
+        const status = await getInstazzyOrderStatus(fund.id);
+        if (status.paymentStatus === "paid") {
+          await approveFund(fund.id);
+        }
+      } catch {
+        /* callback or cron will catch up */
+      }
+    }
+  }
+
   const funds = await listFundsForUser(session.id);
   const ledger = await listLedger(session.id);
   return NextResponse.json({ funds, ledger });
@@ -29,7 +52,7 @@ export async function POST(req: Request) {
 
   try {
     const body = schema.parse(await req.json());
-    if (body.method !== "cryptomus" && body.method !== "binance-pay") {
+    if (body.method !== "cryptomus" && body.method !== "binance-pay" && body.method !== "credit-card") {
       return NextResponse.json(
         { error: "Please contact us to pay with this method." },
         { status: 400 },
@@ -37,6 +60,41 @@ export async function POST(req: Request) {
     }
 
     const amount = Math.round(body.amount * 100) / 100;
+
+    if (body.method === "credit-card") {
+      if (!instazzyConfigured()) {
+        return NextResponse.json(
+          { error: "Card checkout is not configured yet. Please try Cryptomus or Binance Pay." },
+          { status: 503 },
+        );
+      }
+      const row = await createFundRequest({
+        userId: session.id,
+        username: session.username,
+        method: "credit-card",
+        amount,
+        note: body.note || `Card top-up ${amount} USD`,
+        mode: "auto",
+      });
+      const base = SITE.url.replace(/\/$/, "");
+      const result = await createInstazzyOrder({
+        partnerOrderId: row.id,
+        email: session.email,
+        profileTarget: session.username,
+        currency: "USD",
+        total: amount,
+        items: [{ productName: `SSMM Panel balance top-up ($${amount})`, quantity: 1 }],
+        callbackUrl: `${base}/api/webhooks/instazzy`,
+        redirectBackUrl: `${base}/dashboard/add-funds?paid=1&ref=${encodeURIComponent(row.id)}`,
+      });
+      return NextResponse.json({
+        ok: true,
+        id: row.id,
+        fund: row,
+        paymentUrl: result.checkoutUrl,
+        orderId: result.orderId,
+      });
+    }
 
     if (body.method === "cryptomus") {
       if (!isCryptomusConfigured()) {
